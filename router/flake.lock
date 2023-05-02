@@ -1,0 +1,83 @@
+{
+  "nodes": {
+    "bcm-fw-binary": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1,
+        "narHash": "sha256-Mr2BcYbhuAjDWuQcC8jXI/wiqH7PzeHNQUXRS5dHKi8=",
+        "path": "proprietary/Broadcom_NX1_Linux_FW_Upgrade_Utility_lnxfwupg-225.0.1.tar.gz",
+        "type": "path"
+      },
+      "original": {
+        "path": "proprietary/Broadcom_NX1_Linux_FW_Upgrade_Utility_lnxfwupg-225.0.1.tar.gz",
+        "type": "path"
+      }
+    },
+    "joeos": {
+      "inputs": {
+        "bcm-fw-binary": "bcm-fw-binary",
+        "nixpkgs": "nixpkgs"
+      },
+      "locked": {
+        "lastModified": 1,
+        "narHash": "sha256-VudDIfbBaIltpL2XQ/8aujwj8LIQnuxVJZSiuBDzwMc=",
+        "path": "/nix/store/k9dhpr8n6darsrkpl9m4b8grcw32w6m5-source/joeos",
+        "type": "path"
+      },
+      "original": {
+        "path": "/nix/store/k9dhpr8n6darsrkpl9m4b8grcw32w6m5-source/joeos",
+        "type": "path"
+      }
+    },
+    "nixpkgs": {
+      "locked": {
+        "lastModified": 1678500213,
+        "narHash": "sha256-A5s2rXawJ+dCThkMXoMuYW8dgyUmkElcyfVJUot/Vr0=",
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "2ce9b9842b5e63884dfc3dea6689769e2a1ea309",
+        "type": "github"
+      },
+      "original": {
+        "id": "nixpkgs",
+        "type": "indirect"
+      }
+    },
+    "nixpkgs_2": {
+      "locked": {
+        "lastModified": 1682900373,
+        "narHash": "sha256-+ckiCxbGFSs1/wHKCXAZnvb37Htf6k5nmQE3T0Y7hK8=",
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "8b3bc690e201c8d3cbd14633dbf3462a820e73f2",
+        "type": "github"
+      },
+      "original": {
+        "id": "nixpkgs",
+        "type": "indirect"
+      }
+    },
+    "private": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1,
+        "narHash": "sha256-7FaNTUyQsfaRvmsVHjcYXlYI91v+B2XEik6l+m7qYe8=",
+        "path": "./private",
+        "type": "path"
+      },
+      "original": {
+        "path": "./private",
+        "type": "path"
+      }
+    },
+    "root": {
+      "inputs": {
+        "joeos": "joeos",
+        "nixpkgs": "nixpkgs_2",
+        "private": "private"
+      }
+    }
+  },
+  "root": "root",
+  "version": 7
+}

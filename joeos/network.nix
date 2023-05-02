@@ -1,10 +1,15 @@
 # router-oriented configuration of interfaces - likely has some very
 # me-specific setup stuff built in
 
-{ config, pkgs, ... }: with lib;
+{ config, lib, pkgs, ... }: with lib;
 let
   mkBasicOption = type: description: mkOption { inherit type description; };
-  mkOptOption = type: mkBasicOption (types.nullOr type);
+  mkSubOpt = sub: description: mkOption {
+    inherit description;
+    type = types.submodule sub;
+    default = { };
+  };
+  mkOptOption = type: description: ((mkBasicOption (types.nullOr type) description) // { default = null; });
   wiredWpaOpts = {
     options = {
       enable = mkEnableOption "wired wpa supplicant";
@@ -33,8 +38,8 @@ let
     options = {
       enable = mkEnableOption "DHCPv4 client";
       sendHostname = mkOptOption types.bool "Whether to send the hostname with the DHCPv4 solicitation";
-      useDns = mkOptOption types.bool "Whether to use DNS from the DHCPv6 advertisement";
-      duid = mkBasicOption (types.submodule duidOpts) "DUID Options";
+      useDns = mkOptOption types.bool "Whether to use DNS from the DHCPv4 advertisement";
+      duid = mkSubOpt duidOpts "DUID Options";
     };
   };
 
@@ -42,7 +47,7 @@ let
     options = {
       enable = mkEnableOption "DHCPv6 client";
       useDns = mkOptOption types.bool "Whether to use DNS from the DHCPv6 advertisement";
-      duid = mkBasicOption (types.submodule duidOpts) "DUID Options";
+      duid = mkSubOpt duidOpts "DUID Options";
       prefixDelegationHint = mkOptOption types.str "Prefix delegation hint";
     };
   };
@@ -57,7 +62,7 @@ let
     options = {
       forward = mkEnableOption "forwarding";
       masquerade = mkEnableOption "masquerading";
-      dhcp = mkBasicOption (types.submodule dhcpv4ServerOpts) "DHCPv4 server";
+      dhcp = mkSubOpt dhcpv4ServerOpts "DHCPv4 server";
     };
   };
 
@@ -74,7 +79,7 @@ let
       forward = mkEnableOption "forwarding";
       masquerade = mkEnableOption "masquerading";
       sendRa = mkEnableOption "sending IPv6 router advertisements";
-      prefixDelegation = mkBasicOption (types.submodule dhcpPrefixDelOpts) "DHCP prefix delegation";
+      prefixDelegation = mkSubOpt dhcpPrefixDelOpts "DHCP prefix delegation";
     };
   };
 
@@ -84,22 +89,25 @@ let
         type = types.bool;
         default = false;
       };
-      requiredForOnline = mkBasicOption types.bool "Whether this interface is required for the network to be considered online";
+      requiredForOnline = mkOptOption types.bool "Whether this interface is required for the network to be considered online";
       mtu = mkOptOption types.ints.positive "MTU to use if not inferred";
-      vlans = mkBasicOption types.lazyAttrsOf (types.submodule vlanOpts) "VLANs";
-      address = mkBasicOption (types.listOf types.str) "Addresses to attach to this interface";
-      dhcpv4Client = mkBasicOption (types.submodule dhcpv4Opts) "dhcpv4 client";
-      dhcpv6Client = mkBasicOption (types.submodule dhcpv6Opts) "dhcpv6 client";
-      ipv4Router = mkBasicOption (types.submodule ipv4RouterOpts) "ipv4 router";
-      ipv6Router = mkBasicOption (types.submodule ipv6RouterOpts) "ipv6 router";
+      # TODO this is gross
+      vlans = (mkBasicOption (types.lazyAttrsOf (types.submodule vlanOpts)) "VLANs") // {
+        default = { };
+      };
+      address = (mkBasicOption (types.listOf types.str) "Addresses to attach to this interface") // { default = [ ]; };
+      dhcpv4Client = mkSubOpt dhcpv4Opts "dhcpv4 client";
+      dhcpv6Client = mkSubOpt dhcpv6Opts "dhcpv6 client";
+      ipv4Router = mkSubOpt ipv4RouterOpts "ipv4 router";
+      ipv6Router = mkSubOpt ipv6RouterOpts "ipv6 router";
     };
   };
 
   vlanOpts = { name, ... }: {
     options = {
       name = mkBasicOption types.str "Friendly name for this interface";
-      id = mkBasicOption types.ints.positive "id to use for the vlan";
-      network = mkBasicOption (types.submodule networkOpts) "Higher-order network options";
+      id = mkBasicOption types.int "id to use for the vlan";
+      network = mkSubOpt networkOpts "Higher-order network options";
     };
 
     config = {
@@ -110,10 +118,10 @@ let
   interfaceOpts = { name, ... }: {
     options = {
       name = mkBasicOption types.str "Friendly name for the interface";
-      match = mkBasicOption (types.submodule ifaceMatchOpts) "Match options for the interface";
+      match = mkSubOpt ifaceMatchOpts "Match options for the interface";
       macAddress = mkOptOption types.str "MAC address to force";
-      wiredWpaSupplicant = mkBasicOption (types.submodule wiredWpaOpts) "Wired WPA supplicant settings to use if necessary";
-      network = mkBasicOption (types.submodule) "Higher-order network options";
+      wiredWpaSupplicant = mkSubOpt wiredWpaOpts "Wired WPA supplicant settings to use if necessary";
+      network = mkSubOpt networkOpts "Higher-order network options";
     };
 
     config = {
@@ -121,7 +129,7 @@ let
     };
   };
 
-  networkOpts = {
+  netOpts = {
     options = {
       enable = mkEnableOption "network management";
       interfaces = mkBasicOption (types.lazyAttrsOf (types.submodule interfaceOpts)) "interfaces";
@@ -131,15 +139,23 @@ in
 {
   imports = [ ];
   options.joeos = {
-    network = mkBasicOption (types.submodule networkOpts) "Networking";
+    network = mkSubOpt netOpts "Networking";
   };
 
   config =
     let
-      network = config.network;
+      network = config.joeos.network;
       interfaces = attrValues network.interfaces;
-      mkIfSet = v: lib.mkIf v != null v;
-      enableIf = v: mkIf (v == true) "true";
+
+      mkNetStackOpt = ipv4: ipv6:
+        if ipv4 then (if ipv6 then "yes" else "ipv4") else (if ipv6 then "ipv6" else "no");
+      mkDuidDhcp = duid:
+        (attrIf "DUIDType" duid.type) // (attrIf "DUIDRawData" duid.raw);
+      attrIf = field: v: optionalAttrs (v != null) { "${field}" = v; };
+      attrMapIf = field: v: fn: optionalAttrs (v != null) { "${field}" = (fn v); };
+      flagAttrIf = field: v: (attrMapIf field v (v: if v then "yes" else "no"));
+      enableAttrIf = field: v: optionalAttrs v { "${field}" = "yes"; };
+      disableAttrIfNot = field: v: optionalAttrs (!v) { "${field}" = "no"; };
     in
     {
       # if we think we need wpa_supplicant, we need to pull in the systemd packages so that
@@ -149,20 +165,19 @@ in
       systemd.network = {
         enable = network.enable;
         # create a link config for interface
-        links = lib.mapAttrs'
-          (iface: lib.nameValuePair "01-${iface.name}" {
-            matchConfig = {
-              MacAddress = mkIfSet iface.match.macAddress;
-              PermanentMacAddress = mkIfSet iface.match.permMacAddress;
-              Path = mkIfSet iface.match.path;
-            };
-            linkConfig = {
-              MACAddress = mkIfSet iface.macAddress;
-              Name = iface.name;
-              MTUBytes = mkIfSet iface.network.mtu;
-            };
-          })
-          interfaces;
+        links = listToAttrs
+          (map
+            (iface: lib.nameValuePair "01-${iface.name}" {
+              matchConfig =
+                (attrIf "MACAddress" iface.match.macAddress) //
+                (attrIf "PermanentMACAddress" iface.match.permMacAddress) //
+                (attrIf "Path" iface.match.path);
+              linkConfig =
+                (attrIf "MACAddress" iface.macAddress) //
+                (attrIf "Name" iface.name) //
+                (attrMapIf "MTUBytes" iface.network.mtu toString);
+            })
+            interfaces);
 
         # we only need to make netdevs for vlans - of course, it is a recursive
         # option, so we need to recursively pull out all vlan configs independently.
@@ -170,17 +185,15 @@ in
           let
             mkNetdevFromVlan = vlan:
               lib.nameValuePair "01-${vlan.name}" {
-                netdevConfig = {
-                  Name = vlan.name;
-                  Kind = "vlan";
-                  MTUBytes = mkIfSet vlan.network.mtu;
-                };
-                vlanConfig = {
-                  Id = vlan.id;
-                };
+                netdevConfig =
+                  { Kind = "vlan"; } //
+                  attrIf "Name" vlan.name //
+                  attrMapIf "MTUBytes" vlan.network.mtu toString;
+
+                vlanConfig = { Id = vlan.id; };
               };
             mkNetdevsFromVlan =
-              vlan: [ mkNetdevFromVlan vlan ] ++ mkAllNetdevsForNetwork vlan.network;
+              vlan: [ (mkNetdevFromVlan vlan) ] ++ (mkAllNetdevsForNetwork vlan.network);
             mkAllNetdevsForNetwork =
               n: lib.concatMap mkNetdevsFromVlan (attrValues n.vlans);
             baseNetworks = map (i: i.network) interfaces;
@@ -189,57 +202,53 @@ in
 
         networks =
           let
-            mkNetStackOpt = ipv4: ipv6:
-              lib.mkIf (ipv4 || ipv6) (if ipv4 then (if ipv6 then "yes" else "ipv4") else "ipv6");
-
-            mkDuidDhcp = duid: {
-              DUIDType = mkIfSet duid.type;
-              DUIDRawData = mkIfSet duid.raw;
-            };
             mkSysdNetFromNet = name: net:
-              lib.nameValuePair "01-${name}" {
-                inherit name;
-                vlan = mkIf (net.vlans != { }) (map (v: v.name) (attrValues net.vlans));
-                DHCP = mkNetStackOpt net.dhcpv4Client.enable net.dhcpv6Client.enable;
-                linkConfig.RequiredForOnline = enableIf net.requiredForOnline;
-                networkConfig = {
-                  IPForward = mkNetStackOpt net.ipv4Router.forward net.ipv6Router.forward;
-                  IPMasquerade = mkNetStackOpt net.ipv4Router.masquerade net.ipv6Router.masquerade;
-                  DHCPServer = enableIf net.ipv4Router.dhcp.enable;
-                  IPv6SendRA = enableIf net.ipv6Router.sendRa;
-                  DHCPv6PrefixDelegation = enableIf net.ipv6Router.prefixDelegation.enable;
-                } // mkIf net.blackhole {
-                  LinkLocalAddressing = "no";
-                  LLDP = false;
-                  EmitLLDP = false;
-                  IPv6AcceptRA = false;
-                  IPv6SendRA = false;
-                };
-
-                address = net.address;
-
-                dhcpV4Config = with net.dhcpv4Client; mkIf enable ({
-                  SendHostname = mkIfSet sendHostname;
-                  UseDNS = mkIfSet useDns;
-                } // mkDuidDhcp duid);
-
-                dhcpv6Config = with net.dhcpv6Client; mkIf enable ({
-                  UseDNS = mkIfSet useDns;
-                  PrefixDelegationHint = mkIfSet prefixDelegationHint;
-                } // mkDuidDhcp duid);
-
-                dhcpServerConfig = mkIf net.ipv4Router.dhcp.enable {
-                  SendOption = mkIf (net.mtu != null) "26:uint16:${net.mtu}";
-                };
-
-                dhcpV6PrefixDelegationConfig = mkIf net.ipv6Router.prefixDelegation.enable {
-                  SubnetId = mkIfSet net.ipv6Router.prefixDelegation.subnetId;
-                };
-              };
+              lib.nameValuePair "01-${name}"
+                (
+                  {
+                    inherit name;
+                    DHCP = mkNetStackOpt net.dhcpv4Client.enable net.dhcpv6Client.enable;
+                    linkConfig = flagAttrIf "RequiredForOnline" net.requiredForOnline;
+                    networkConfig = {
+                      IPForward = mkNetStackOpt net.ipv4Router.forward net.ipv6Router.forward;
+                      IPMasquerade = mkNetStackOpt net.ipv4Router.masquerade net.ipv6Router.masquerade;
+                    } //
+                    (enableAttrIf "DHCPServer" net.ipv4Router.dhcp.enable) //
+                    (enableAttrIf "IPv6SendRA" net.ipv6Router.sendRa) //
+                    (enableAttrIf "DHCPPrefixDelegation" net.ipv6Router.prefixDelegation.enable) //
+                    (optionalAttrs net.blackhole {
+                      LinkLocalAddressing = "no";
+                      LLDP = false;
+                      EmitLLDP = false;
+                      IPv6AcceptRA = false;
+                      IPv6SendRA = false;
+                    });
+                  } // (optionalAttrs (net.address != [ ]) {
+                    address = net.address;
+                  }) // (optionalAttrs (net.vlans != { }) {
+                    vlan = map (v: v.name) (attrValues net.vlans);
+                  }) // (optionalAttrs net.dhcpv4Client.enable {
+                    dhcpV4Config =
+                      (disableAttrIfNot "SendHostname" net.dhcpv4Client.sendHostname) //
+                      (disableAttrIfNot "UseDNS" net.dhcpv4Client.useDns) //
+                      (mkDuidDhcp net.dhcpv4Client.duid);
+                  }) // (optionalAttrs net.dhcpv6Client.enable {
+                    dhcpV6Config =
+                      disableAttrIfNot "UseDNS" net.dhcpv6Client.useDns //
+                      attrIf "PrefixDelegationHint" net.dhcpv6Client.prefixDelegationHint //
+                      (mkDuidDhcp net.dhcpv6Client.duid);
+                  }) // (optionalAttrs net.ipv4Router.dhcp.enable {
+                    dhcpServerConfig =
+                      attrMapIf "SendOption" net.mtu (m: "26:uint16:${toString m}");
+                  }) // (optionalAttrs net.ipv6Router.prefixDelegation.enable {
+                    dhcpPrefixDelegationConfig =
+                      attrMapIf "SubnetId" net.ipv6Router.prefixDelegation.subnetId toString;
+                  })
+                );
             # works for both interfaces & vlans!
             mkSysdNetFromObj = o: mkSysdNetFromNet o.name o.network;
 
-            mkAllNetworks = o: [ mkSysdNetFromObj o ] ++ lib.concatMap mkAllNetworks (attrValues o.network.vlans);
+            mkAllNetworks = o: [ (mkSysdNetFromObj o) ] ++ (lib.concatMap mkAllNetworks (attrValues o.network.vlans));
           in
           listToAttrs (lib.concatMap mkAllNetworks interfaces);
       };
@@ -258,13 +267,13 @@ in
       environment.etc =
         let
           mkWpaConfigForIface =
-            assert i.macAddress != null;
-            i: lib.nameValuePair "wpa_supplicant/wpa_supplicant-wired-${i.name}" {
+            i:
+            lib.nameValuePair "wpa_supplicant/wpa_supplicant-wired-${i.name}" {
               text = "
-              eapol_version=1
-              ap_scan=0
-              fast_reauth=1
-              network={
+                  eapol_version=1
+                  ap_scan=0
+                  fast_reauth=1
+                  network={
                       ca_cert=\"${i.wiredWpaSupplicant.caCert}\"
                       client_cert=\"${i.wiredWpaSupplicant.clientCert}\"
                       private_key=\"${i.wiredWpaSupplicant.clientKey}\"
@@ -273,10 +282,10 @@ in
                       identity=\"${i.macAddress}\"
                       key_mgmt=IEEE8021X
                       phase1=\"allow_canned_success=1\"
-              }
+                  }
               ";
             };
         in
-        listToAttrs (map mkWpaWiredForIface (filter (i: i.wiredWpaSupplicant.enable) interfaces));
+        listToAttrs (map mkWpaConfigForIface (filter (i: i.wiredWpaSupplicant.enable) interfaces));
     };
 }

@@ -12,10 +12,10 @@
     let
       broadcom-firmware = import ./broadcom-firmware.nix { inherit nixpkgs bcm-fw-binary; };
       default = import ./default.nix { inherit nixpkgs; };
-      network = import ./network.nix { inherit nixpkgs; };
+      network = import ./network.nix;
       provisioning = import ./provisioning.nix { inherit nixpkgs; };
     in
-    {
+    rec {
       nixosModules.default = default;
       nixosModules.network = network;
       nixosModules.provisioning = provisioning;
@@ -24,7 +24,8 @@
       packages."x86_64-linux"."lnxfwupd" = broadcom-firmware.lnxfwupd;
 
       packages."x86_64-linux"."livedisk" = import ./livedisk.nix {
-        inherit nixpkgs broadcom-firmware default provisioning;
+        inherit nixpkgs broadcom-firmware;
+        inherit (nixosModules);
       };
     };
   }

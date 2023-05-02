@@ -23,8 +23,12 @@ let
         type = types.bool;
         default = false;
       };
-      sshKey = mkOption {
-        type = types.nullOr types.path;
+      sshKeys = mkOption {
+        type = types.listOf types.str;
+        default = null;
+      };
+      hashedPassword = mkOption {
+        type = types.nullOr types.str;
         default = null;
       };
     };
@@ -91,15 +95,13 @@ in
         home = "/home/${value.name}";
         createHome = true;
         useDefaultShell = true;
+        hashedPassword = lib.mkIf (value.hashedPassword != null) value.hashedPassword;
         openssh.authorizedKeys.keys = lib.mkIf (value.sshKey != null) [ value.sshKey ];
       })
       config.joeos.users;
   } // lib.mkIf (config.joeos.server) {
     # disable power management
     powerManagement.enable = false;
-
-    # disable password for wheel users
-    security.sudo.wheelNeedsPassword = false;
 
     # add some more settings which should allow for nicer auto-mgmnt of the nix store
     # TODO: should only do this if we are going to allow inline management
