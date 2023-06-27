@@ -210,12 +210,14 @@ in
 
         table inet global {
           chain inbound_internet {
-            # drop any opportunistic DNS resolution from the outside - TODO should not be two rules
-            udp dport 53 drop
-            tcp dport 53 drop
 
             # just allow ipv6, for whatever reason we aren't tracking it right
             meta protocol ip6 accept
+            
+            # drop any opportunistic DNS resolution from the outside - TODO should not be two rules
+            # TODO not stopping external queriers
+            udp dport 53 drop
+            tcp dport 53 drop
 
             # Let pings in at a ratelimit
             icmp type echo-request limit rate 5/second accept
@@ -302,9 +304,9 @@ in
           server = {
             # answer from anywhere (this is controlled via nftables)
             # this handles cases where we may be in a confusing routing situation
-            interface = ["0.0.0.0" "::0"];
+            interface = [ "internalNet" "lhAHNet" "homelabNet" ];
             interface-automatic = true;
-            access-control = [ "0.0.0.0/0 allow" "::0/0 allow"];
+            access-control = [ "0.0.0.0/0 allow" "::0/0 allow" ];
           };
         };
       };
