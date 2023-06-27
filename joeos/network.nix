@@ -55,6 +55,7 @@ let
   dhcpv4ServerOpts = {
     options = {
       enable = mkEnableOption "DHCPv4 server";
+      dns = (mkOptOption (types.listOf types.str) "DNS servers to advertise") // {default = [];};
     };
   };
 
@@ -63,6 +64,13 @@ let
       forward = mkEnableOption "forwarding";
       masquerade = mkEnableOption "masquerading";
       dhcp = mkSubOpt dhcpv4ServerOpts "DHCPv4 server";
+    };
+  };
+
+  sendRaOpts = {
+    options = {
+      enable = mkEnableOption "IPV6SendRA";
+      dns = (mkOptOption (types.listOf types.str) "DNS servers to advertise") // {default = [];};
     };
   };
 
@@ -78,7 +86,7 @@ let
     options = {
       forward = mkEnableOption "forwarding";
       masquerade = mkEnableOption "masquerading";
-      sendRa = mkEnableOption "sending IPv6 router advertisements";
+      sendRa = mkSubOpt sendRaOpts "IPv6 router adverts";
       prefixDelegation = mkSubOpt dhcpPrefixDelOpts "DHCP prefix delegation";
     };
   };
@@ -96,6 +104,7 @@ let
         default = { };
       };
       address = (mkBasicOption (types.listOf types.str) "Addresses to attach to this interface") // { default = [ ]; };
+      dns = (mkBasicOption (types.listOf types.str) "DNS addresses to attach to this interface") // { default = [ ]; };
       dhcpv4Client = mkSubOpt dhcpv4Opts "dhcpv4 client";
       dhcpv6Client = mkSubOpt dhcpv6Opts "dhcpv6 client";
       ipv4Router = mkSubOpt ipv4RouterOpts "ipv4 router";
@@ -155,15 +164,22 @@ in
       attrMapIf = field: v: fn: optionalAttrs (v != null) { "${field}" = (fn v); };
       flagAttrIf = field: v: (attrMapIf field v (v: if v then "yes" else "no"));
       enableAttrIf = field: v: optionalAttrs v { "${field}" = "yes"; };
-      disableAttrIfNot = field: v: optionalAttrs (!v) { "${field}" = "no"; };
+      disableAttrIfNot = field: v: optionalAttrs (v == null || !v) { "${field}" = "no"; };
     in
-    {
+    mkIf network.enable {
+      # disable dhcpcd, as we should be using networkd instead
+      networking.dhcpcd.enable = false;
+      # also disable the firewall. Makes things hard
+      networking.firewall.enable = false;
+      # but we do want nftables around, and we will populate a ruleset later
+      networking.nftables.enable = true;
+
       # if we think we need wpa_supplicant, we need to pull in the systemd packages so that
       # the units can be symlink'd in as intended
       systemd.packages = mkIf (any (i: i.wiredWpaSupplicant.enable) interfaces) [ pkgs.wpa_supplicant ];
 
       systemd.network = {
-        enable = network.enable;
+        enable = true;
         # create a link config for interface
         links = listToAttrs
           (map
@@ -210,12 +226,16 @@ in
                     DHCP = mkNetStackOpt net.dhcpv4Client.enable net.dhcpv6Client.enable;
                     linkConfig = flagAttrIf "RequiredForOnline" net.requiredForOnline;
                     networkConfig = {
-                      IPForward = mkNetStackOpt net.ipv4Router.forward net.ipv6Router.forward;
-                      IPMasquerade = mkNetStackOpt net.ipv4Router.masquerade net.ipv6Router.masquerade;
+                      # TODO: we probably don't want to give this control to
+                      # systemd at all. 
+                      # IPForward = mkNetStackOpt net.ipv4Router.forward net.ipv6Router.forward;
+                      # IPMasquerade = mkNetStackOpt net.ipv4Router.masquerade net.ipv6Router.masquerade;
+                      DNS = net.dns;
                     } //
                     (enableAttrIf "DHCPServer" net.ipv4Router.dhcp.enable) //
-                    (enableAttrIf "IPv6SendRA" net.ipv6Router.sendRa) //
+                    (enableAttrIf "IPv6SendRA" net.ipv6Router.sendRa.enable) //
                     (enableAttrIf "DHCPPrefixDelegation" net.ipv6Router.prefixDelegation.enable) //
+                    (enableAttrIf "IPv6AcceptRA" net.dhcpv6Client.enable) //
                     (optionalAttrs net.blackhole {
                       LinkLocalAddressing = "no";
                       LLDP = false;
@@ -234,12 +254,19 @@ in
                       (mkDuidDhcp net.dhcpv4Client.duid);
                   }) // (optionalAttrs net.dhcpv6Client.enable {
                     dhcpV6Config =
+                      { "WithoutRA" = "solicit"; } //
                       disableAttrIfNot "UseDNS" net.dhcpv6Client.useDns //
                       attrIf "PrefixDelegationHint" net.dhcpv6Client.prefixDelegationHint //
                       (mkDuidDhcp net.dhcpv6Client.duid);
                   }) // (optionalAttrs net.ipv4Router.dhcp.enable {
-                    dhcpServerConfig =
-                      attrMapIf "SendOption" net.mtu (m: "26:uint16:${toString m}");
+                    dhcpServerConfig = {
+                      DNS = net.ipv4Router.dhcp.dns;
+                    } //
+                    (attrMapIf "SendOption" net.mtu (m: "26:uint16:${toString m}"));
+                  }) // (optionalAttrs net.ipv6Router.sendRa.enable {
+                    ipv6SendRAConfig = {
+                      DNS = net.ipv6Router.sendRa.dns;
+                    };
                   }) // (optionalAttrs net.ipv6Router.prefixDelegation.enable {
                     dhcpPrefixDelegationConfig =
                       attrMapIf "SubnetId" net.ipv6Router.prefixDelegation.subnetId toString;
@@ -259,6 +286,8 @@ in
           mkWpaWiredForIface =
             i: lib.nameValuePair "wpa_supplicant-wired@${i.name}" {
               overrideStrategy = "asDropin";
+              enable = true;
+              wantedBy = [ "multi-user.target" ];
             };
         in
         listToAttrs (map mkWpaWiredForIface (filter (i: i.wiredWpaSupplicant.enable) interfaces));
@@ -268,22 +297,23 @@ in
         let
           mkWpaConfigForIface =
             i:
-            lib.nameValuePair "wpa_supplicant/wpa_supplicant-wired-${i.name}" {
-              text = "
-                  eapol_version=1
-                  ap_scan=0
-                  fast_reauth=1
-                  network={
-                      ca_cert=\"${i.wiredWpaSupplicant.caCert}\"
-                      client_cert=\"${i.wiredWpaSupplicant.clientCert}\"
-                      private_key=\"${i.wiredWpaSupplicant.clientKey}\"
-                      eap=TLS
-                      eapol_flags=0
-                      identity=\"${i.macAddress}\"
-                      key_mgmt=IEEE8021X
-                      phase1=\"allow_canned_success=1\"
-                  }
-              ";
+            lib.nameValuePair "wpa_supplicant/wpa_supplicant-wired-${i.name}.conf" {
+              text = ''
+                openssl_ciphers=DEFAULT@SECLEVEL=0
+                eapol_version=1
+                ap_scan=0
+                fast_reauth=1
+                network={
+                    ca_cert="${i.wiredWpaSupplicant.caCert}"
+                    client_cert="${i.wiredWpaSupplicant.clientCert}"
+                    private_key="${i.wiredWpaSupplicant.clientKey}"
+                    eap=TLS
+                    eapol_flags=0
+                    identity="${i.macAddress}"
+                    key_mgmt=IEEE8021X
+                    phase1="allow_canned_success=1"
+                }
+              '';
             };
         in
         listToAttrs (map mkWpaConfigForIface (filter (i: i.wiredWpaSupplicant.enable) interfaces));

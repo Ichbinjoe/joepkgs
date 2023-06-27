@@ -8,24 +8,16 @@
     };
   };
 
-  outputs = { self, nixpkgs, bcm-fw-binary }:
+  outputs = { ... }@attrs:
     let
-      broadcom-firmware = import ./broadcom-firmware.nix { inherit nixpkgs bcm-fw-binary; };
-      default = import ./default.nix { inherit nixpkgs; };
-      network = import ./network.nix;
-      provisioning = import ./provisioning.nix { inherit nixpkgs; };
+      broadcom-firmware = import ./broadcom-firmware.nix;
     in
     rec {
-      nixosModules.default = default;
-      nixosModules.network = network;
-      nixosModules.provisioning = provisioning;
+      nixosModules.default = import ./default.nix;
+      nixosModules.iso = import ./iso.nix;
+      nixosModules.deploy = import ./iso.nix;
 
       packages."x86_64-linux"."bmapilnx" = broadcom-firmware.bmapilnx;
       packages."x86_64-linux"."lnxfwupd" = broadcom-firmware.lnxfwupd;
-
-      packages."x86_64-linux"."livedisk" = import ./livedisk.nix {
-        inherit nixpkgs broadcom-firmware;
-        inherit (nixosModules);
-      };
     };
-  }
+}

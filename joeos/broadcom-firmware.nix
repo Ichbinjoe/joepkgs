@@ -21,6 +21,7 @@ rec {
 
     meta = {
       description = "Broadcom firmware update utility package";
+      license = licenses.unfree;
       platforms = platforms.linux;
     };
   };
@@ -54,7 +55,7 @@ rec {
 
     meta = {
       description = "Broadcom API library";
-      license = licenses.free;
+      license = licenses.unfree;
       platforms = platforms.linux;
     };
   };
@@ -89,7 +90,7 @@ rec {
 
     meta = {
       description = "Broadcom Firmware utility";
-      license = licenses.free;
+      license = licenses.unfree;
       platforms = platforms.linux;
     };
   };

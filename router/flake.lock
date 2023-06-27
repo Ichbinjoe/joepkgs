@@ -15,41 +15,26 @@
     },
     "joeos": {
       "inputs": {
-        "bcm-fw-binary": "bcm-fw-binary",
-        "nixpkgs": "nixpkgs"
+        "bcm-fw-binary": "bcm-fw-binary"
       },
       "locked": {
-        "lastModified": 1,
-        "narHash": "sha256-VudDIfbBaIltpL2XQ/8aujwj8LIQnuxVJZSiuBDzwMc=",
-        "path": "/nix/store/k9dhpr8n6darsrkpl9m4b8grcw32w6m5-source/joeos",
+        "lastModified": 1687852339,
+        "narHash": "sha256-+T2kDes5LFwjqo1dcvEkEwspzAiQNnT9lsFggBAROrI=",
+        "path": "/Users/joe/ws/joepkgs/joeos",
         "type": "path"
       },
       "original": {
-        "path": "/nix/store/k9dhpr8n6darsrkpl9m4b8grcw32w6m5-source/joeos",
-        "type": "path"
+        "id": "joeos",
+        "type": "indirect"
       }
     },
     "nixpkgs": {
       "locked": {
-        "lastModified": 1678500213,
-        "narHash": "sha256-A5s2rXawJ+dCThkMXoMuYW8dgyUmkElcyfVJUot/Vr0=",
+        "lastModified": 1687793116,
+        "narHash": "sha256-6xRgZ2E9r/BNam87vMkHJ/0EPTTKzeNwhw3abKilEE4=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "2ce9b9842b5e63884dfc3dea6689769e2a1ea309",
-        "type": "github"
-      },
-      "original": {
-        "id": "nixpkgs",
-        "type": "indirect"
-      }
-    },
-    "nixpkgs_2": {
-      "locked": {
-        "lastModified": 1682900373,
-        "narHash": "sha256-+ckiCxbGFSs1/wHKCXAZnvb37Htf6k5nmQE3T0Y7hK8=",
-        "owner": "NixOS",
-        "repo": "nixpkgs",
-        "rev": "8b3bc690e201c8d3cbd14633dbf3462a820e73f2",
+        "rev": "9e4e0807d2142d17f463b26a8b796b3fe20a3011",
         "type": "github"
       },
       "original": {
@@ -73,7 +58,7 @@
     "root": {
       "inputs": {
         "joeos": "joeos",
-        "nixpkgs": "nixpkgs_2",
+        "nixpkgs": "nixpkgs",
         "private": "private"
       }
     }
