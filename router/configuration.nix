@@ -74,6 +74,7 @@ in
           pkgs.unzip
           pkgs.zip
           pkgs.openssl
+          pkgs.mtr
         ];
       };
 
@@ -119,16 +120,22 @@ in
                 requiredForOnline = false;
               };
               # use cloudflare for dns for now
+              internalDns = {
+                ipv4Router.dhcp.dns = [ "_server_address" ];
+                ipv6Router.sendRa.dns = [ "_link_local" ];
+              };
+              cloudflareDns = {
+                ipv4Router.dhcp.dns = [ "1.1.1.1" "1.0.0.1" ];
+                ipv6Router.sendRa.dns = [ "2606:4700:4700::1111" "2606:4700:4700::1001" ];
+              };
               internalAuthoritativeRouter = subnetId: defaultRouter // {
                 address = [ "192.168.${toString subnetId}.1/24" ];
                 ipv4Router.dhcp = {
                   enable = true;
-                  dns = [ "_server_address" ];
                 };
                 ipv6Router = {
                   sendRa = {
                     enable = true;
-                    dns = [ "_link_local" ];
                   };
                   prefixDelegation = {
                     inherit subnetId;
@@ -160,6 +167,12 @@ in
                           };
                         in
                         {
+                          ipv6Router = {
+                            prefixDelegation = {
+                              subnetId = 7;
+                              enable = true;
+                            };
+                          };
                           dhcpv4Client = {
                             inherit duid;
                             enable = true;
@@ -180,18 +193,18 @@ in
 
               internalNet = {
                 match.path = "pci-0000:03:00.1";
-                network = internalAuthoritativeRouter 2;
+                network = (internalAuthoritativeRouter 2) // internalDns;
               };
 
               homelabNet = {
                 match.path = "pci-0000:04:00.0";
                 network = (internalAuthoritativeRouter 1) // {
                   mtu = 9000;
-                };
+                } // internalDns;
               };
               lhAHNet = {
                 match.path = "pci-0000:04:00.1";
-                network = internalAuthoritativeRouter 4;
+                network = (internalAuthoritativeRouter 4) // cloudflareDns;
               };
             };
         };
@@ -242,6 +255,10 @@ in
 
             # allow SSH
             tcp dport 22 accept
+
+            # allow dns
+            udp dport 53 accept
+            tcp dport 53 accept
 
             # all else gets dropped inbound
           }
