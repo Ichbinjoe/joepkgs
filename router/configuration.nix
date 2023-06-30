@@ -121,21 +121,23 @@ in
               };
               # use cloudflare for dns for now
               internalDns = {
-                ipv4Router.dhcp.dns = [ "_server_address" ];
-                ipv6Router.sendRa.dns = [ "_link_local" ];
+                ipv4 = [ "_server_address" ];
+                ipv6 = [ "_link_local" ];
               };
               cloudflareDns = {
-                ipv4Router.dhcp.dns = [ "1.1.1.1" "1.0.0.1" ];
-                ipv6Router.sendRa.dns = [ "2606:4700:4700::1111" "2606:4700:4700::1001" ];
+                ipv4 = [ "1.1.1.1" "1.0.0.1" ];
+                ipv6 = [ "2606:4700:4700::1111" "2606:4700:4700::1001" ];
               };
-              internalAuthoritativeRouter = subnetId: defaultRouter // {
+              internalAuthoritativeRouter = subnetId: dns: defaultRouter // {
                 address = [ "192.168.${toString subnetId}.1/24" ];
                 ipv4Router.dhcp = {
                   enable = true;
+                  dns = dns.ipv4;
                 };
                 ipv6Router = {
                   sendRa = {
                     enable = true;
+                    dns = dns.ipv6;
                   };
                   prefixDelegation = {
                     inherit subnetId;
@@ -193,18 +195,18 @@ in
 
               internalNet = {
                 match.path = "pci-0000:03:00.1";
-                network = (internalAuthoritativeRouter 2) // internalDns;
+                network = internalAuthoritativeRouter 2 internalDns;
               };
 
               homelabNet = {
                 match.path = "pci-0000:04:00.0";
-                network = (internalAuthoritativeRouter 1) // {
+                network = internalAuthoritativeRouter 1 internalDns // {
                   mtu = 9000;
-                } // internalDns;
+                };
               };
               lhAHNet = {
                 match.path = "pci-0000:04:00.1";
-                network = (internalAuthoritativeRouter 4) // cloudflareDns;
+                network = internalAuthoritativeRouter 4 cloudflareDns;
               };
             };
         };
