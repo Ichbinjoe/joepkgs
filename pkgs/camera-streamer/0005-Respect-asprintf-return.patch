@@ -1,0 +1,29 @@
+From 4d636b2e3973f7a5184b35c141c2de402a62b357 Mon Sep 17 00:00:00 2001
+From: Joe Hirschfeld <j@ibj.io>
+Date: Sat, 2 Dec 2023 14:14:53 -0800
+Subject: [PATCH 5/6] Respect asprintf return
+
+Sometimes we may fail to malloc, this needs caught.
+---
+ device/v4l2/device_list.c | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
+
+diff --git a/device/v4l2/device_list.c b/device/v4l2/device_list.c
+index 865f3cb..d72cee7 100644
+--- a/device/v4l2/device_list.c
++++ b/device/v4l2/device_list.c
+@@ -27,7 +27,10 @@ static void device_list_read_formats(int fd, device_info_formats_t *formats, enu
+ 
+ static bool device_list_read_dev(device_info_t *info, const char *name)
+ {
+-  asprintf(&info->path, "/dev/%s", name);
++  int ret = asprintf(&info->path, "/dev/%s", name);
++  if (ret < 0) {
++    return false;
++  }
+ 
+   int fd = open(info->path, O_RDWR|O_NONBLOCK);
+   if (fd < 0) {
+-- 
+2.39.3 (Apple Git-145)
+

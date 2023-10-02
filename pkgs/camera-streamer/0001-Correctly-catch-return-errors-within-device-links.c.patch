@@ -1,0 +1,89 @@
+From 7dec9018165bb316eea4fe115ab20de17cc7bf11 Mon Sep 17 00:00:00 2001
+From: Joe Hirschfeld <j@ibj.io>
+Date: Sat, 2 Dec 2023 13:30:35 -0800
+Subject: [PATCH 1/6] Correctly catch & return errors within device/links.c
+
+This is a bug in upstream - we don't check whether or not the previous function returns an error prior to using ret as a number of fds, which may cause a hang.
+---
+ device/links.c | 23 ++++++++++++++---------
+ 1 file changed, 14 insertions(+), 9 deletions(-)
+
+diff --git a/device/links.c b/device/links.c
+index 31f47cd..7c095b2 100644
+--- a/device/links.c
++++ b/device/links.c
+@@ -291,7 +291,7 @@ static int links_enqueue_from_capture_list(buffer_list_t *capture_list, link_t *
+   return 0;
+ 
+ error:
+-  return -1;
++  return -EINVAL;
+ }
+ 
+ static int links_dequeue_from_output_list(buffer_list_t *output_list)
+@@ -304,7 +304,7 @@ static int links_dequeue_from_output_list(buffer_list_t *output_list)
+   return 0;
+ 
+ error:
+-  return -1;
++  return -EINVAL;
+ }
+ 
+ static void print_pollfds(struct pollfd *fds, int n)
+@@ -332,6 +332,9 @@ static int links_step(link_t *all_links, bool force_active, int timeout_now_ms,
+   links_process_capture_buffers(all_links, timeout_next_ms);
+ 
+   int n = links_build_fds(all_links, &pool);
++  if (n < 0) {
++    return n;
++  }
+   print_pollfds(pool.fds, n);
+   int ret = poll(pool.fds, n, timeout_now_ms);
+   print_pollfds(pool.fds, n);
+@@ -360,26 +363,28 @@ static int links_step(link_t *all_links, bool force_active, int timeout_now_ms,
+       buf_list->dev->paused);
+ 
+     if (pool.fds[i].revents & POLLIN) {
+-      if (links_enqueue_from_capture_list(capture_list, link) < 0) {
+-        return -1;
++      int ret = links_enqueue_from_capture_list(capture_list, link);
++      if (ret < 0) {
++        return ret;
+       }
+     }
+ 
+     // Dequeue buffers that were processed
+     if (pool.fds[i].revents & POLLOUT) {
+-      if (links_dequeue_from_output_list(output_list) < 0) {
+-        return -1;
++      int ret = links_dequeue_from_output_list(output_list);
++      if (ret < 0) {
++        return ret;
+       }
+     }
+ 
+     if (pool.fds[i].revents & POLLHUP) {
+       LOG_INFO(buf_list, "Device disconnected.");
+-      return -1;
++      return -EINVAL;
+     }
+ 
+     if (pool.fds[i].revents & POLLERR) {
+       LOG_INFO(buf_list, "Got an error");
+-      return -1;
++      return -EINVAL;
+     }
+   }
+   return 0;
+@@ -405,7 +410,7 @@ static int links_stream(link_t *all_links, bool do_stream)
+   return 0;
+ 
+ error:
+-  return -1;
++  return -EINVAL;
+ }
+ 
+ static void links_refresh_stats(link_t *all_links, uint64_t *last_refresh_us)
+-- 
+2.39.3 (Apple Git-145)
+
