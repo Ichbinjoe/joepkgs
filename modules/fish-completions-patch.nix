@@ -34,7 +34,7 @@ with lib; {
           {
             inherit package;
             # this is the important part - we can't build this locally at least with my setup
-            preferLocalBuild = false;
+            preferLocalBuild = true;
             allowSubstitutes = false;
           }
           // optionalAttrs (package ? meta.priority) {meta.priority = package.meta.priority;}

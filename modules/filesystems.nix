@@ -248,10 +248,19 @@ in {
 
     # Add the mount helpers to the system path so that `mount' can find them.
     # TODO: Do we need this?
-    system.fsPackages = [pkgs.dosfstools];
+    # system.fsPackages = [pkgs.dosfstools];
 
-    # add these to the system env
-    environment.systemPackages = config.system.fsPackages;
+    # add these to the system env - this isn't actually *required*, just the kernel modules
+    # environment.systemPackages = config.system.fsPackages;
+
+    # we *do* need to get the path overriden for the following units however:
+
+    # systemd-makefs@device.service
+    # systemd-mkswap@device.service
+    # systemd-growfs@mountpoint.service
+    # systemd-growfs-root.service
+
+    # we might need to also explicitly pull particular kernel modules in
 
     # define these mounts
     systemd.mounts = map mkMountUnitForFs stdMounts;

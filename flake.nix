@@ -27,6 +27,6 @@
         "brewmonitor" = systems.brewmonitor;
       };
 
-      packages = eachSystem (s: mapAttrs (variant: variant-config: variant-config.config.system.build.transferScripts nixpkgs.legacyPackages.${s}) nixosConfigurations);
+      packages = (eachSystem (s: mapAttrs (variant: variant-config: variant-config.config.system.build.transferScripts nixpkgs.legacyPackages.${s}) nixosConfigurations));
     };
 }
