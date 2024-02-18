@@ -7,11 +7,6 @@ with lib; {
   networking = {
     useNetworkd = true;
     dhcpcd.enable = false;
-    firewall.enable = false;
-    nftables = {
-      enable = true;
-      flushRuleset = true;
-    };
   };
 
   systemd.network = {
@@ -98,7 +93,6 @@ with lib; {
 
         networkConfig = {
           DHCPPrefixDelegation = "yes";
-          LinkLocalAddressing = "ipv6";
           IPv6SendRA = "no";
           DHCPServer = "no";
           IPv6AcceptRA = "yes";
@@ -121,14 +115,17 @@ with lib; {
           UseHostname = "no";
           UseDNS = "no";
           UseNTP = "no";
+          UseAddress = "no";
         };
 
         ipv6AcceptRAConfig = {
           UseDNS = "no";
-          DHCPv6Client = "yes";
+          DHCPv6Client = "always";
         };
 
-        dhcpPrefixDelegationConfig.UplinkInterface = ":self";
+        dhcpPrefixDelegationConfig = {
+          UplinkInterface = ":self";
+        };
       };
 
       # standard internal interface
@@ -141,6 +138,14 @@ with lib; {
       "01-lan" = mkMerge [
         {
           matchConfig.Name = "lan";
+          ipv6Prefixes = [
+            {
+              ipv6PrefixConfig = {
+                Prefix = "fde7:76fd:7444:fffe::/64";
+                Assign = "yes";
+              };
+            }
+          ];
         }
         (internalRouter 2)
       ];
@@ -167,12 +172,39 @@ with lib; {
           matchConfig.Name = "internal";
           dhcpServerConfig = {
             DNS = mkForce ["1.1.1.1" "1.0.0.1"];
-            # NTP = mkForce [ "0.pool.ntp.org" "1.pool.ntp.org" "2.pool.ntp.org" "3.pool.ntp.org" ];
           };
           ipv6SendRAConfig.DNS = mkForce ["2606:4700:4700::1111" "2606:4700:4700::1001"];
         }
         (internalRouter 4)
       ];
+
+      "01-lo" = {
+        matchConfig.Name = "lo";
+        addresses = [
+          {
+            addressConfig = {
+              Address = "127.0.0.1/8";
+              Scope = "host";
+            };
+          }
+          {
+            addressConfig = {
+              Address = "::1/128";
+              Scope = "host";
+            };
+          }
+          {
+            addressConfig = {
+              Address = "172.20.170.224/32";
+            };
+          }
+          {
+            addressConfig = {
+              Address = "fde7:76fd:7444:ffff::1/128";
+            };
+          }
+        ];
+      };
     };
   };
 

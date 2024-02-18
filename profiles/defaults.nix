@@ -95,7 +95,7 @@ with lib; {
       useNetworkd = mkDefault true;
       dhcpcd.enable = mkDefault false;
       firewall.enable = mkDefault true;
-      nftables. enable = mkDefault true;
+      nftables.enable = mkDefault true;
     };
 
     # set up a reasonable network profile

@@ -4,7 +4,9 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/23.11";
     nixos-hardware.url = "github:NixOS/nixos-hardware/master";
+    nnf.url = "github:thelegy/nixos-nftables-firewall";
     private.url = "joeprivate";
+    tempmonitor.url = "tempmonitor";
   };
 
   outputs = {nixpkgs, ...} @ attrs:
@@ -27,6 +29,6 @@
         "brewmonitor" = systems.brewmonitor;
       };
 
-      packages = (eachSystem (s: mapAttrs (variant: variant-config: variant-config.config.system.build.transferScripts nixpkgs.legacyPackages.${s}) nixosConfigurations));
+      packages = eachSystem (s: mapAttrs (variant: variant-config: variant-config.config.system.build.transferScripts nixpkgs.legacyPackages.${s}) nixosConfigurations);
     };
 }

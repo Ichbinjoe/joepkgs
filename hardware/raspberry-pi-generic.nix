@@ -12,6 +12,7 @@ with lib; {
   environment.systemPackages = [
     pkgs.raspberrypi-eeprom
     pkgs.libraspberrypi
+    pkgs.dtc
   ];
 
   console.enable = mkDefault false;

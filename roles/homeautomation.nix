@@ -43,15 +43,15 @@
 
     # create two dbs - one for Grafana, one for Home Assistant
     ensureDatabases = [
-      # "grafana"
+      "grafana"
       "hass"
     ];
 
     ensureUsers = [
-      # {
-      #   name = "grafana";
-      #   ensureDBOwnership = true;
-      # }
+      {
+        name = "grafana";
+        ensureDBOwnership = true;
+      }
       {
         name = "hass";
         ensureDBOwnership = true;
@@ -179,6 +179,8 @@
         bind :::80 v4v6
         option forwardfor except 127.0.0.1
         use_backend paperless if { path /paperless } || { path_beg /paperless/ }
+        use_backend prometheus if { path /prometheus } || { path_beg /prometheus/ }
+        use_backend grafana if { path /grafana } || { path_beg /grafana/ }
 
         default_backend homeassistant
 
@@ -191,6 +193,16 @@
         option forwardfor
 
         server homeassistant1 [::1]:${toString config.services.home-assistant.config.http.server_port}
+
+      backend prometheus
+        option forwardfor
+
+        server prometheus1 [::1]:${toString config.services.prometheus.port}
+
+      backend grafana
+        option forwardfor
+
+        server grafana1 [::1]:3000
     '';
   };
 
@@ -205,6 +217,41 @@
   };
 
   users.users.${config.services.paperless.user}.password = "password";
+
+  services.prometheus = {
+    enable = true;
+    listenAddress = "[::1]";
+    webExternalUrl = "http://192.168.2.33/prometheus/";
+    scrapeConfigs = [
+      {
+        job_name = "router";
+        scrape_interval = "15s";
+        static_configs = [
+          {
+            targets = ["192.168.2.1:9324" "192.168.2.1:9374" "192.168.2.1:9100" "192.168.2.1:9633" "192.168.2.1:9558" "192.168.2.1:9167"];
+          }
+        ];
+      }
+    ];
+  };
+
+  services.grafana = {
+    enable = true;
+    settings = {
+      server = {
+        http_addr = "[::1]";
+        http_port = 3000;
+        domain = "192.168.2.33";
+        root_url = "http://192.168.2.33/grafana/";
+        serve_from_sub_path = true;
+      };
+      database = {
+        type = "postgres";
+        host = "/run/postgresql";
+        user = "grafana";
+      };
+    };
+  };
 
   networking.firewall.allowedTCPPorts = [21 80];
 }

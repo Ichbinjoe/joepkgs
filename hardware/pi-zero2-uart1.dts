@@ -1,0 +1,29 @@
+/dts-v1/;
+/plugin/;
+
+/{
+  compatible = "raspberrypi,model-zero-2-w", "brcm,bcm2837";
+
+  fragment@0 {
+    target = <&uart1_gpio14>;
+    __overlay__ {
+      brcm,pull = <0x0>, <0x2>;
+    };
+  };
+
+  fragment@1 {
+    target = <&uart1>;
+    __overlay__ {
+      pinctrl-names = "default";
+      pinctrl-0 = <&uart1_gpio14>;
+      status = "okay";
+    };
+  };
+
+  fragment@2 {
+    target-path = "/chosen";
+    __overlay__ {
+      /delete-property/ stdout-path;
+    };
+  };
+};
