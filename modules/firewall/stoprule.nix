@@ -1,5 +1,4 @@
-{ lib, ... }:
-{
+{lib, ...}: {
   networking.nftables.stopRuleset = lib.mkDefault ''
     table inet filter {
       # Block all incomming connections traffic except SSH and "ping".

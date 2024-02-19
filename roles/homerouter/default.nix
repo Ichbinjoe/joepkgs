@@ -23,6 +23,8 @@ with lib; {
     "net.ipv6.conf.all.forwarding" = true;
   };
 
+  security.sudo.wheelNeedsPassword = false;
+
   boot.kernelParams = ["nomodeset"];
 
   environment.systemPackages = with pkgs; [

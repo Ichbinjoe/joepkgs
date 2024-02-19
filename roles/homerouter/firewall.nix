@@ -61,20 +61,26 @@ in {
 
       dhcp4Server = {
         from = ["lan" "iot"];
-        to = localZone;
+        to = [localZone];
         allowedUDPPorts = [67];
+      };
+
+      dhcpClient = {
+        from = ["internet"];
+        to = [localZone];
+        allowedUDPPorts = [68 546];
       };
 
       dns = {
         from = ["lan"];
-        to = localZone;
+        to = [localZone];
         allowedUDPPorts = [53];
         allowedTCPPorts = [53 853];
       };
 
       ntp = {
         from = ["lan" "iot" "dn42"];
-        to = localZone;
+        to = [localZone];
         allowedUDPPorts = [123];
       };
 
@@ -87,7 +93,7 @@ in {
 
       monitorPorts = {
         from = ["lan"];
-        to = localZone;
+        to = [localZone];
         allowedTCPPorts = enabledExporterPorts;
       };
     };

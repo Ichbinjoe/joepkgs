@@ -1,6 +1,7 @@
 {
   config,
   lib,
+  pkgs,
   ...
 }:
 with lib; let
@@ -141,9 +142,9 @@ with lib; let
 
   mkBirdCfgFromBgpSession = interface: bgp: ''
     protocol bgp ${bgp.name} from ${bgp.template} {
-      neighbor ${bgp.peerAddress} as ${bgp.peerAs};
+      neighbor ${bgp.peerAddress} as ${toString bgp.peerAs};
       source address ${bgp.sourceAddress};
-      interface ${interface};
+      interface "${interface}";
     }
   '';
 
@@ -174,7 +175,7 @@ with lib; let
               PublicKey = wg.peerPublicKey;
               AllowedIPs = ["0.0.0.0/0" "::/0"];
             }
-            // optionAttrs (wg.remoteEndpoint != null) {
+            // optionalAttrs (wg.remoteEndpoint != null) {
               Endpoint = wg.remoteEndpoint;
             };
         }
@@ -220,8 +221,8 @@ with lib; let
   mkNetworkFromIp6 = interface: ip6Peer:
     mkP2PNet {
       inherit interface;
-      local = "${ip4Peer.local}/128";
-      peer = "${ip4Peer.peer}/128";
+      local = "${ip6Peer.local}/128";
+      peer = "${ip6Peer.peer}/128";
     };
 
   mkNetworksFromPeer = peer:
@@ -239,7 +240,7 @@ with lib; let
   mkFwRuleFromWg = interface: wg: {
     "dn42-wg-${interface}" = mkIf (shouldMkWgFwRule wg) {
       from = ["dn42-wg-${interface}-peer"];
-      to = localZone;
+      to = [localZone];
       allowedUDPPorts = [wg.localPort];
     };
   };
@@ -252,12 +253,12 @@ with lib; let
         interfaces = [interface];
       }
       // (
-        if (traceVal (is4Addr (traceVal bgp.peerAddress)))
+        if (is4Addr bgp.peerAddress)
         then {
-          ipv4Addresses = [ bgp.peerAddress ];
+          ipv4Addresses = [bgp.peerAddress];
         }
         else {
-          ipv6Addresses = [ bgp.peerAddress ];
+          ipv6Addresses = [bgp.peerAddress];
         }
       );
   };
@@ -270,7 +271,7 @@ with lib; let
   in {
     "dn42-bgp-${bgp.name}" = {
       from = ["dn42-bgp-${bgp.name}-peer"];
-      to = localZone;
+      to = [localZone];
       extraLines = [
         ''${protocol} daddr ${bgp.sourceAddress} tcp dport 179 accept''
       ];
@@ -374,6 +375,20 @@ with lib; let
     };
   '';
 
+  birdRoa = ''
+    roa4 table dn42_roa_v4;
+    roa6 table dn42_roa_v6;
+    protocol static {
+      roa4 { table dn42_roa_v4; };
+      include "/var/lib/bird/roa_dn42_v4.conf";
+    };
+
+    protocol static {
+      roa6 { table dn42_roa_v6; };
+      include "/var/lib/bird/roa_dn42_v6.conf";
+    };
+  '';
+
   birdTemplate = ''
     template bgp dn42_multiprotocol {
       local as ${toString cfg.asNumber};
@@ -381,7 +396,7 @@ with lib; let
 
       ipv4 {
         import filter {
-          if is_valid_network() && !is_self_net() then {
+          if dn42_valid4() && !dn42_is_self4() then {
             if (roa_check(dn42_roa_v4, net, bgp_path.last) != ROA_VALID) then {
                 print "[dn42] ROA check failed for ", net, " ASN ", bgp_path.last;
                 reject;
@@ -390,7 +405,8 @@ with lib; let
         };
 
         export filter {
-          if is_valid_network() && source ~ [RTS_STATIC, RTS_BGP] then accept;
+          bgp_next_hop = ${cfg.ip4Self};
+          if dn42_valid4() && source ~ [RTS_STATIC, RTS_BGP] then accept;
           reject;
         };
 
@@ -399,7 +415,7 @@ with lib; let
 
       ipv6 {
         import filter {
-          if is_valid_network_v6() && !is_self_net_v6() then {
+          if dn42_valid6() && !dn42_is_self6() then {
             if (roa_check(dn42_roa_v6, net, bgp_path.last) != ROA_VALID) then {
                 print "[dn42] ROA check failed for ", net, " ASN ", bgp_path.last;
                 reject;
@@ -408,13 +424,55 @@ with lib; let
         };
 
         export filter {
-          if is_valid_network_v6() && source ~ [RTS_STATIC, RTS_BGP] then accept;
+          if dn42_valid6() && source ~ [RTS_STATIC, RTS_BGP] then accept;
           reject;
         };
 
         import limit 1000 action block;
       };
     };
+  '';
+
+  birdGrcExport = ''
+    protocol bgp dn42_grc {
+      local as ${toString cfg.asNumber};
+      neighbor fd42:4242:2601:ac12::1 as 4242422602;
+
+      # enable multihop as the collector is not locally connected
+      multihop;
+
+      ipv4 {
+        # export all available paths to the collector
+        add paths tx;
+
+        # import/export filters
+        import none;
+        export filter {
+          # export all valid routes
+          if ( dn42_valid4() && source ~ [ RTS_STATIC, RTS_BGP ] )
+          then {
+            accept;
+          }
+          reject;
+        };
+      };
+
+      ipv6 {
+        # export all available paths to the collector
+        add paths tx;
+
+        # import/export filters
+        import none;
+        export filter {
+          # export all valid routes
+          if ( dn42_valid6() && source ~ [ RTS_STATIC, RTS_BGP ] )
+          then {
+            accept;
+          }
+          reject;
+        };
+      };
+    }
   '';
 in {
   options.dn42 = {
@@ -429,7 +487,7 @@ in {
     ip4Dn42Net = mkOption {
       type = types.commas;
       description = "ip4 networks which are valid to be advertised across the dn42 network";
-      default = mkMerge [
+      default = concatStringsSep "," [
         "172.20.0.0/14{21,29}" # dn42
         "172.20.0.0/24{28,32}" # dn42 Anycast
         "172.21.0.0/24{28,32}" # dn42 Anycast
@@ -445,21 +503,17 @@ in {
     ip6Dn42Net = mkOption {
       type = types.commas;
       description = "ip6 networks which are valid to be advertised across the dn42 network";
-      default = mkMerge [
-        "fd00::/8{44,64}"
-      ];
+      default = "fd00::/8{44,64}";
     };
 
     ip4Self = mkOption {
       type = extended-types.ip4Addr;
       description = "router ip4 address";
-      default = null;
     };
 
     ip6Self = mkOption {
       type = extended-types.ip6Addr;
       description = "router ip6 address";
-      default = null;
     };
 
     ip4SelfNet = mkOption {
@@ -488,6 +542,8 @@ in {
       type = types.attrsOf (types.submodule dn42Peer);
       description = "peers to this node";
     };
+
+    enableGrc = mkEnableOption "export to the global route collector";
   };
 
   config = let
@@ -503,10 +559,39 @@ in {
           birdPreamble
           birdFunctions
           birdKernel
+          birdRoa
           birdAdvertisement
           birdTemplate
+          (mkIf (cfg.enableGrc) birdGrcExport)
         ]
         ++ (map mkBirdCfgFromPeer peers));
+      preCheckConfig = ''
+        sed -i 's,include "/var/lib/bird/roa_dn42_v[46]\.conf";,,' ./bird2.conf
+      '';
+    };
+
+    systemd.services.dn42-roa-update = {
+      wantedBy = ["multi-user.target"];
+      after = ["network.target"];
+      serviceConfig = {
+        Type = "oneshot";
+        Restart = "on-failure";
+        RestartSec = 15;
+        TimeoutSec = 15;
+        ExecStart = ''
+          ${pkgs.curl}/bin/curl https://dn42.burble.com/roa/dn42_roa_bird2_4.conf -o /var/lib/bird/roa_dn42_v4.conf
+          ${pkgs.curl}/bin/curl https://dn42.burble.com/roa/dn42_roa_bird2_6.conf -o /var/lib/bird/roa_dn42_v6.conf
+        '';
+      };
+    };
+
+    systemd.timers.dn42-roa-update = {
+      wantedBy = ["multi-user.target"];
+      after = ["network.target"];
+      timerConfig = {
+        OnBootSec = 0;
+        OnUnitActiveSec = "15m";
+      };
     };
 
     systemd.network.netdevs = mkMerge (map mkNetDevFromPeer peers);

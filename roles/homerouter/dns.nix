@@ -33,6 +33,17 @@ in {
           extended-statistics = true;
           use-syslog = true;
 
+          cache-min-ttl = "300";
+          cache-max-ttl = "14400";
+
+          msg-cache-size = "128m";
+          rrset-cache-size = "256m";
+          key-cache-size = "32m";
+          neg-cache-size = "8m";
+
+          prefetch = true;
+          prefetch-key = true;
+
           local-zone = map (addr: ''"${addr}" typetransparent'') dn42AuthoritativeZones;
           private-domain = dn42AuthoritativeZones;
           trust-anchor-file = [
