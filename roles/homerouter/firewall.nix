@@ -20,6 +20,27 @@ with lib; let
     dnstcp = 853; # tcp
   };
 in {
+  networking.nftables.chains = {
+    input.conntrack = {
+      after = mkForce ["veryEarly"];
+      before = ["early"];
+      rules = [
+        "ct state {established, related} accept"
+        "ct state invalid drop"
+      ];
+    };
+
+    forward.conntrack = {
+      after = mkForce ["veryEarly"];
+      before = ["early"];
+      rules = [
+        "ct state {established, related} accept"
+        "iifname {lan, internet} ct state invalid drop"
+        "oifname {lan, internet} ct state invalid drop"
+      ];
+    };
+  };
+
   networking.nftables.firewall = {
     enable = true;
 
@@ -45,7 +66,7 @@ in {
 
     snippets.nnf-common.enable = false;
     snippets.nnf-default-stopRuleset.enable = false;
-    snippets.nnf-conntrack.enable = true;
+    snippets.nnf-conntrack.enable = false;
     snippets.nnf-drop.enable = true;
     snippets.nnf-icmp.enable = true;
     snippets.nnf-loopback.enable = true;

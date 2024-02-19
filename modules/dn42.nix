@@ -390,6 +390,48 @@ with lib; let
   '';
 
   birdTemplate = ''
+    template bgp fmepnet {
+      local as ${toString cfg.asNumber};
+      path metric 1;
+
+      ipv4 {
+        import filter {
+          if net ~ [172.20.159.224/27{21,29}] then {
+            if (roa_check(dn42_roa_v4, net, bgp_path.last) != ROA_VALID) then {
+                print "[dn42] ROA check failed for ", net, " ASN ", bgp_path.last;
+                reject;
+            } else accept;
+          } else reject;
+        };
+
+        export filter {
+          bgp_next_hop = ${cfg.ip4Self};
+          if dn42_valid4() && source ~ [RTS_STATIC, RTS_BGP] then accept;
+          reject;
+        };
+
+        import limit 1000 action block;
+      };
+
+      ipv6 {
+        import filter {
+          if net ~ [fdfc:732b:1fa2::/48{44,64}] then {
+            if (roa_check(dn42_roa_v6, net, bgp_path.last) != ROA_VALID) then {
+                print "[dn42] ROA check failed for ", net, " ASN ", bgp_path.last;
+                reject;
+            } else accept;
+          } else reject;
+        };
+
+        export filter {
+          if dn42_valid6() && source ~ [RTS_STATIC, RTS_BGP] then accept;
+          reject;
+        };
+
+        import limit 1000 action block;
+      };
+    };
+
     template bgp dn42_multiprotocol {
       local as ${toString cfg.asNumber};
       path metric 1;

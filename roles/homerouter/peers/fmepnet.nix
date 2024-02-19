@@ -23,6 +23,7 @@
 
     bgp."dn42_fmepnet" = {
       peerAs = 4242423703;
+      template = "fmepnet";
       sourceAddress = "fe80::100";
       peerAddress = "fe80::1234";
     };
