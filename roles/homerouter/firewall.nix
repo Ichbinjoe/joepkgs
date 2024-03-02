@@ -93,7 +93,7 @@ in {
       };
 
       dns = {
-        from = ["lan"];
+        from = ["lan" "dn42Routable"];
         to = [localZone];
         allowedUDPPorts = [53];
         allowedTCPPorts = [53 853];

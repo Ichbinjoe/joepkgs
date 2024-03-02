@@ -15,6 +15,7 @@ with lib; {
     ./firewall.nix
     ./options.nix
     ./net.nix
+    ./pdns.nix
     ./time.nix
   ];
 

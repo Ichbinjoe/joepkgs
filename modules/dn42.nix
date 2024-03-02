@@ -613,6 +613,7 @@ in {
     };
 
     systemd.services.dn42-roa-update = {
+      enable = false;
       wantedBy = ["multi-user.target"];
       after = ["network.target"];
       serviceConfig = {
@@ -628,6 +629,7 @@ in {
     };
 
     systemd.timers.dn42-roa-update = {
+      enable = false;
       wantedBy = ["multi-user.target"];
       after = ["network.target"];
       timerConfig = {

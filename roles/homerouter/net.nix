@@ -203,6 +203,11 @@ with lib; {
               Address = "fde7:76fd:7444:ffff::1/128";
             };
           }
+          {
+            addressConfig = {
+              Address = "fde7:76fd:7444:ffff::53/128";
+            };
+          }
         ];
       };
     };

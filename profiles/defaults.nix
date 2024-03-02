@@ -83,6 +83,13 @@ with lib; {
       withPython3 = mkDefault false;
     };
 
+    environment.systemPackages = [
+      (pkgs.runCommand "default-editor" {} ''
+        mkdir -p $out/bin/
+        ln -s ${config.programs.neovim.package}/bin/nvim $out/bin/editor
+      '')
+    ];
+
     # override some openssh stuff by default
     services.openssh.settings = {
       KbdInteractiveAuthentication = mkDefault false;

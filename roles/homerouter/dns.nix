@@ -25,9 +25,7 @@ in {
       enable = true;
       settings = {
         server = {
-          # answer from anywhere (this is controlled via nftables)
-          # this handles cases where we may be in a confusing routing situation
-          interface = ["0.0.0.0" "::0"];
+          interface = ["lan"];
           prefer-ip6 = true;
           access-control = ["0.0.0.0/0 allow" "::0/0 allow"];
           extended-statistics = true;
