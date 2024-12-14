@@ -1,10 +1,13 @@
-{nixpkgs}:
-with import nixpkgs {system = "x86_64-linux";};
-with nixpkgs.lib; rec {
+{
+  pkgs,
+  stdenv,
+  lib
+}:
+rec {
   bm-fw-upgrade-utility-tar-gz = pkgs.requireFile {
     name = "Broadcom_NX1_Linux_FW_Upgrade_Utility_lnxfwupg-225.0.1.tar.gz";
-    sha256 = "728179acd7104e6cf2e9912a8aeb0c9d68de7f7a";
-    url = "???";
+    sha256 = "Mr2BcYbhuAjDWuQcC8jXI/wiqH7PzeHNQUXRS5dHKi8=";
+    url = ""
   };
 
   bm-fw-upgrade-utility = stdenv.mkDerivation rec {
@@ -25,8 +28,8 @@ with nixpkgs.lib; rec {
 
     meta = {
       description = "Broadcom firmware update utility package";
-      license = licenses.unfree;
-      platforms = platforms.linux;
+      license = lib.licenses.unfree;
+      platforms = lib.platforms.linux;
     };
   };
 
@@ -59,8 +62,8 @@ with nixpkgs.lib; rec {
 
     meta = {
       description = "Broadcom API library";
-      license = licenses.unfree;
-      platforms = platforms.linux;
+      license = lib.licenses.unfree;
+      platforms = lib.platforms.linux;
     };
   };
 
@@ -94,8 +97,8 @@ with nixpkgs.lib; rec {
 
     meta = {
       description = "Broadcom Firmware utility";
-      license = licenses.unfree;
-      platforms = platforms.linux;
+      license = lib.licenses.unfree;
+      platforms = lib.platforms.linux;
     };
   };
 }
