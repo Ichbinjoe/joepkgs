@@ -12,12 +12,16 @@
 
     # Disk management / partitioning
     pkgs.btrfs-progs
+    pkgs.lvm2
     pkgs.parted
 
     # System utilities
-    pkgs.htop
+    pkgs.curl
     pkgs.git
+    pkgs.htop
+    pkgs.jq
     pkgs.tmux
+    pkgs.wget
 
     # Network related utilities
     pkgs.conntrack-tools
