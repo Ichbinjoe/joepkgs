@@ -13,7 +13,7 @@ with lib; {
     # add another variable
     system.stateVersionOverride = mkOption {
       type = types.str;
-      default = "23.11";
+      default = "24.11";
       description = ''See system.stateVersion'';
     };
   };
@@ -23,7 +23,7 @@ with lib; {
     system.stateVersion = config.system.stateVersionOverride;
 
     # use systemd as stage2
-    boot.initrd.systemd.enable = true;
+    boot.initrd.systemd.enable = mkDefault true;
 
     # standardize on US/Pacific for all time
     time.timeZone = mkDefault "US/Pacific";
@@ -53,7 +53,7 @@ with lib; {
           type = "github";
           owner = "NixOS";
           repo = "nixpkgs";
-          ref = "nixos-23.11";
+          ref = "nixos-24.11";
         };
       };
     };
