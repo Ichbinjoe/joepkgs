@@ -33,7 +33,10 @@ with lib;
       fi
       touch $1/etc/NIXOS
 
-      mkdir -p $1/nix/var/nix
+      bootctl --esp-path=$1/boot install
+      mkdir -p $1/tmp
+      mkdir -p $1/nix/var/nix/profiles
+      ln -sf '${config.system.build.toplevel}' "$1/nix/var/nix/profiles/system-1-link"
 
       # when we lock the GC we can then bulk copy all of our closures in
       # TODO: is this usage of flock valid?
