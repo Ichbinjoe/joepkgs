@@ -130,7 +130,6 @@ in {
       "input_text"
       "logbook"
       "logger"
-      "map"
       "media_source"
       "nest"
       "nws"
@@ -162,7 +161,7 @@ in {
         currency = "USD";
         temperature_unit = "F";
         time_zone = config.time.timeZone;
-        unit_system = "imperial";
+        unit_system = "us_customary";
       };
       http = {
         server_host = "::1";
