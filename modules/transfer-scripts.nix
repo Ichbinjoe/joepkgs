@@ -27,13 +27,13 @@ with lib; let
 in {
   config.system.build.transferScripts = localPkgs: rec {
     toplevel = config.system.build.toplevel;
-    uploadViaSsh = pkgs.writeShellScriptBin "upload-via-ssh" ''
+    uploadViaSsh = localPkgs.writeShellScriptBin "upload-via-ssh" ''
       ${localPkgs.nix}/bin/nix-copy-closure --to "$1" "${switchAndCreateGeneration}"
       ssh -t "$1" -- "bash -c \"sudo -- ${switchAndCreateGeneration}/bin/switch-and-create-gen $2\""
     '';
 
     # This is specifically designed for MacOS
-    writeSdImage = pkgs.writeShellScriptBin "write-sd-image" ''
+    writeSdImage = localPkgs.writeShellScriptBin "write-sd-image" ''
       disk="$1"
 
       sudo diskutil unmountDisk "$disk"
@@ -49,6 +49,6 @@ in {
     '';
 
     writeIso = config.system.build.copyIsoToDisk;
-    # writeProvisionerIso = (config.system.build.provisioner.config.system.build.transferScripts localPkgs).writeIso;
+    writeProvisionerIso = (config.system.build.provisioner.config.system.build.transferScripts localPkgs).writeIso;
   };
 }
