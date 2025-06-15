@@ -25,7 +25,7 @@ in {
       enable = true;
       settings = {
         server = {
-          interface = ["lan"];
+          interface = ["127.0.0.53" "lan"];
           prefer-ip6 = true;
           access-control = ["0.0.0.0/0 allow" "::0/0 allow"];
           extended-statistics = true;

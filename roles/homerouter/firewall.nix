@@ -7,7 +7,7 @@ with lib; let
   enabledExporters = filterAttrs (n: v: v.enable or false) config.services.prometheus.exporters;
   enabledExporterPorts = mapAttrsToList (n: v: v.port) enabledExporters;
   dn42Peers = attrValues config.dn42.peers;
-  dn42Interfaces = map (p: p.name) dn42Peers;
+  dn42Interfaces = (map (p: p.name) dn42Peers) ++ ["nyc-wg"];
   localZone = config.networking.nftables.firewall.localZoneName;
 
   ports = {
@@ -53,6 +53,11 @@ in {
         interfaces = ["lan"];
       };
 
+      lanDn42 = {
+        interfaces = ["lan"];
+        ipv6Addresses = ["fde7:76fd:7444::/48"];
+      };
+
       iot = {
         interfaces = ["iot"];
       };
@@ -61,6 +66,10 @@ in {
         interfaces = dn42Interfaces;
         ipv4Addresses = ["172.20.0.0/14" "10.0.0.0/8"];
         ipv6Addresses = ["fd00::/8"];
+      };
+
+      nyc = {
+        interfaces = ["nyc-wg"];
       };
     };
 
@@ -106,10 +115,16 @@ in {
       };
 
       dn42Transit = {
-        from = ["dn42Routable"];
-        to = ["dn42Routable"];
+        from = ["dn42Routable" "lanDn42"];
+        to = ["dn42Routable" "lanDn42"];
         verdict = "accept";
         before = ["conntrack"];
+      };
+
+      pdnsApi = {
+        from = ["lan"];
+        to = [localZone];
+        allowedTCPPorts = [8081];
       };
 
       monitorPorts = {
@@ -125,6 +140,21 @@ in {
     dn42Ifaces = concatStringsSep ", " dn42Interfaces;
     trackedInterfaces = concatStringsSep ", " (["lan" "internet"] ++ dn42Interfaces);
   in ''
+    table ip ip4_ospf {
+      chain input {
+        type filter hook input priority 0;
+        ip saddr 172.20.170.232 ip daddr 172.20.170.224 ip protocol 89 meta iifname "nyc-wg" accept;
+        ip protocol 89 reject;
+      }
+    }
+    table ip6 ip6_ospf {
+      chain input {
+        type filter hook input priority 0;
+        ip6 saddr fe80::101 ip6 daddr fe80::100 ip6 nexthdr 89 meta iifname "nyc-wg" accept;
+        ip6 nexthdr 89 reject;
+      }
+    }
+
     table ip ip4_flow {
       flowtable f4 {
         hook ingress priority 0;

@@ -26,7 +26,7 @@ with lib; {
 
   security.sudo.wheelNeedsPassword = false;
 
-  boot.kernelParams = ["nomodeset"];
+  boot.kernelParams = ["nomdeset"];
 
   environment.systemPackages = with pkgs; [
     ethtool

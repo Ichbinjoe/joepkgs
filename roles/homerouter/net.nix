@@ -46,6 +46,28 @@ with lib; {
           Id = 1;
         };
       };
+
+      "01-nyc-wg" = {
+        netdevConfig = {
+          Name = "nyc-wg";
+          Kind = "wireguard";
+        };
+
+        wireguardConfig = {
+          PrivateKeyFile = "/var/wg/private.key";
+          ListenPort = 49999;
+        };
+
+        wireguardPeers = [
+          {
+            wireguardPeerConfig = {
+              PublicKey = "BmbqgpKUEYp+FKIFKKDi0Sh+l7OBLzB+AJdTogk7uRU=";
+              AllowedIPs = ["0.0.0.0/0" "::/0"];
+              Endpoint = "107.175.132.113:49999";
+            };
+          }
+        ];
+      };
     };
 
     networks = let
@@ -146,6 +168,13 @@ with lib; {
               };
             }
           ];
+          # ipv6RoutePrefixes = [
+          #   {
+          #     ipv6RoutePrefixConfig = {
+          #       Route = "fd00::/8";
+          #     };
+          #   }
+          # ];
         }
         (internalRouter 2)
       ];
@@ -206,6 +235,32 @@ with lib; {
           {
             addressConfig = {
               Address = "fde7:76fd:7444:ffff::53/128";
+            };
+          }
+        ];
+      };
+      "01-nyc-wg" = {
+        matchConfig.Name = "nyc-wg";
+        networkConfig = {
+          DHCP = "no";
+          IPv6AcceptRA = "no";
+        };
+
+        addresses = [
+          {
+            addressConfig = {
+              Address = "172.20.170.224/32";
+              Peer = "172.20.170.232/32";
+              Scope = "link";
+              RouteMetric = 2048;
+            };
+          }
+          {
+            addressConfig = {
+              Address = "fe80::100/128";
+              Peer = "fe80::101/128";
+              Scope = "link";
+              RouteMetric = 2048;
             };
           }
         ];
