@@ -124,7 +124,7 @@ in {
       description = ''
         Whether or not to allow systemd-boot into an editor state
       '';
-      default = false;
+      default = true;
     };
     extraFiles = mkOption {
       type = types.attrsOf types.path;
@@ -243,6 +243,7 @@ in {
 
     boot.kernelParams = [
       "root=LABEL=${config.isoImage.volumeID}"
+      "boot.shell_on_fail"
     ];
 
     boot.loader.grub.enable = false;
@@ -430,6 +431,8 @@ in {
         availableKernelModules = ["squashfs" "iso9660" "uas" "overlay"];
         kernelModules = ["loop" "overlay"];
         supportedFilesystems = ["vfat"];
+        # iso packaging can't use systemd based initrd - it won't boot.
+        systemd.enable = false;
       };
       postBootCommands = ''
         # After booting, register the contents of the Nix store on the
