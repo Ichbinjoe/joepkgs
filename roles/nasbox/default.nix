@@ -9,24 +9,6 @@
     ../../profiles/defaults.nix
   ];
 
-  boot.initrd.kernelModules = [
-    "ahci"
-    "ata_piix"
-    "sd_mod"
-    "sr_mod"
-    "usb_storage"
-    "ehci_hcd"
-    "uhci_hcd"
-    "xhci_hcd"
-    "xhci_pci"
-    "mmc_block"
-    "mmc_core"
-    "cqhci"
-    "sdhci"
-    "sdhci_pci"
-    "sdhci_acpi"
-  ];
-
   boot.kernel.sysctl = {
     "net.ipv4.ip_forward" = true;
     "net.ipv6.conf.all.forwarding" = true;
