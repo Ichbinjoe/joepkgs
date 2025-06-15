@@ -1,13 +1,12 @@
 {
   pkgs,
   stdenv,
-  lib
-}:
-rec {
+  lib,
+}: rec {
   bm-fw-upgrade-utility-tar-gz = pkgs.requireFile {
     name = "Broadcom_NX1_Linux_FW_Upgrade_Utility_lnxfwupg-225.0.1.tar.gz";
     sha256 = "Mr2BcYbhuAjDWuQcC8jXI/wiqH7PzeHNQUXRS5dHKi8=";
-    url = ""
+    url = "";
   };
 
   bm-fw-upgrade-utility = stdenv.mkDerivation rec {

@@ -35,51 +35,48 @@ in {
 
   networking.firewall.enable = false;
 
-  systemd.network.netdevs =
-  let
+  systemd.network.netdevs = let
     wg = {
-        name, pubkey, endpoint
-      }: {
-        netdevConfig = {
-          Name = name;
-          Kind = "wireguard";
-        };
-
-        wireguardConfig = {
-          PrivateKeyFile = "/etc/wireguard/private.key";
-        };
-
-        wireguardPeers = [
-          {
-            wireguardPeerConfig = {
-              PublicKey = pubkey;
-              AllowedIPs = ["0.0.0.0/0" "::/0"];
-              Endpoint = endpoint;
-            };
-          }
-        ];
+      name,
+      pubkey,
+      endpoint,
+    }: {
+      netdevConfig = {
+        Name = name;
+        Kind = "wireguard";
       };
-    in
-  {
+
+      wireguardConfig = {
+        PrivateKeyFile = "/etc/wireguard/private.key";
+      };
+
+      wireguardPeers = [
+        {
+          PublicKey = pubkey;
+          AllowedIPs = ["0.0.0.0/0" "::/0"];
+          Endpoint = endpoint;
+        }
+      ];
+    };
+  in {
     "01-nyc-wg" = wg {
-        name = "nyc-wg";
-        pubkey = "BmbqgpKUEYp+FKIFKKDi0Sh+l7OBLzB+AJdTogk7uRU=";
-        endpoint = "107.175.132.113:49990";
+      name = "nyc-wg";
+      pubkey = "BmbqgpKUEYp+FKIFKKDi0Sh+l7OBLzB+AJdTogk7uRU=";
+      endpoint = "107.175.132.113:49990";
     };
     "01-sea-wg" = wg {
-        name = "sea-wg";
-        pubkey = "9vBrb8Jq3WmifgCjncMzLZvdkoDi3FoSvHjJGsUMwGg=";
-        endpoint = "sea01.ke8jwh.com:50002";
+      name = "sea-wg";
+      pubkey = "9vBrb8Jq3WmifgCjncMzLZvdkoDi3FoSvHjJGsUMwGg=";
+      endpoint = "sea01.ke8jwh.com:50002";
     };
     "01-sjc-wg" = wg {
-        name = "sjc-wg";
-        pubkey = "sl9vN6wmKuB3aGjBYx2ukjABc66EAn0p5VJsg0XjjjM=";
-        endpoint = "sjc01.ke8jwh.com:50002";
+      name = "sjc-wg";
+      pubkey = "sl9vN6wmKuB3aGjBYx2ukjABc66EAn0p5VJsg0XjjjM=";
+      endpoint = "sjc01.ke8jwh.com:50002";
     };
   };
 
-  systemd.network.networks =
-  let
+  systemd.network.networks = let
     wgNet = name: {
       matchConfig.Name = name;
 
@@ -90,12 +87,10 @@ in {
 
       addresses = [
         {
-          addressConfig = {
-            Address = "fe80::100/128";
-            Peer = "fe80::101/128";
-            Scope = "link";
-            RouteMetric = 2048;
-          };
+          Address = "fe80::100/128";
+          Peer = "fe80::101/128";
+          Scope = "link";
+          RouteMetric = 2048;
         }
       ];
     };
@@ -109,9 +104,7 @@ in {
 
       addresses = [
         {
-          addressConfig = {
-            Address = dn42Ip;
-          };
+          Address = dn42Ip;
         }
       ];
     };
@@ -120,7 +113,7 @@ in {
   # basic ssh
   services.openssh.enable = true;
 
-  services.bird2 = {
+  services.bird = {
     enable = true;
     config = ''
       router id 0.0.0.1;

@@ -2,7 +2,7 @@
   description = "A collection of modules specific for JoeOS";
 
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/24.05";
+    nixpkgs.url = "github:NixOS/nixpkgs/25.05";
     nixos-hardware.url = "github:NixOS/nixos-hardware/master";
     private.url = "joeprivate";
     tempmonitor.url = "tempmonitor";

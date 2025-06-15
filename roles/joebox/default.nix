@@ -15,8 +15,8 @@ with lib; let
   wgPort = 49992;
 in {
   imports = [
-    ../profiles/base.nix
-    ../profiles/defaults.nix
+    ../../profiles/base.nix
+    ../../profiles/defaults.nix
   ];
 
   boot.initrd.kernelModules = [
@@ -86,11 +86,9 @@ in {
 
       wireguardPeers = [
         {
-          wireguardPeerConfig = {
-            PublicKey = "BmbqgpKUEYp+FKIFKKDi0Sh+l7OBLzB+AJdTogk7uRU=";
-            AllowedIPs = ["0.0.0.0/0" "::/0"];
-            Endpoint = "107.175.132.113:${toString wgPort}";
-          };
+          PublicKey = "BmbqgpKUEYp+FKIFKKDi0Sh+l7OBLzB+AJdTogk7uRU=";
+          AllowedIPs = ["0.0.0.0/0" "::/0"];
+          Endpoint = "107.175.132.113:${toString wgPort}";
         }
       ];
     };
@@ -107,11 +105,9 @@ in {
 
       wireguardPeers = [
         {
-          wireguardPeerConfig = {
-            PublicKey = "9vBrb8Jq3WmifgCjncMzLZvdkoDi3FoSvHjJGsUMwGg=";
-            AllowedIPs = ["0.0.0.0/0" "::/0"];
-            Endpoint = "107.174.240.107:${toString wgPort}";
-          };
+          PublicKey = "9vBrb8Jq3WmifgCjncMzLZvdkoDi3FoSvHjJGsUMwGg=";
+          AllowedIPs = ["0.0.0.0/0" "::/0"];
+          Endpoint = "107.174.240.107:${toString wgPort}";
         }
       ];
     };
@@ -129,11 +125,9 @@ in {
 
       wireguardPeers = [
         {
-          wireguardPeerConfig = {
-            PublicKey = "p+vuFQshD+xQDXvx3XLEYPJbjHdw4VaeszSgzNwDJAI=";
-            AllowedIPs = ["0.0.0.0/0" "::/0"];
-            Endpoint = "fergus.fmepnet.org:52823";
-          };
+          PublicKey = "p+vuFQshD+xQDXvx3XLEYPJbjHdw4VaeszSgzNwDJAI=";
+          AllowedIPs = ["0.0.0.0/0" "::/0"];
+          Endpoint = "fergus.fmepnet.org:52823";
         }
       ];
     };
@@ -161,12 +155,10 @@ in {
 
       addresses = [
         {
-          addressConfig = {
-            Address = "fe80::100/128";
-            Peer = "fe80::101/128";
-            Scope = "link";
-            RouteMetric = 2048;
-          };
+          Address = "fe80::100/128";
+          Peer = "fe80::101/128";
+          Scope = "link";
+          RouteMetric = 2048;
         }
       ];
     };
@@ -180,12 +172,10 @@ in {
 
       addresses = [
         {
-          addressConfig = {
-            Address = "fe80::100/128";
-            Peer = "fe80::101/128";
-            Scope = "link";
-            RouteMetric = 2048;
-          };
+          Address = "fe80::100/128";
+          Peer = "fe80::101/128";
+          Scope = "link";
+          RouteMetric = 2048;
         }
       ];
     };
@@ -199,20 +189,16 @@ in {
 
       addresses = [
         {
-          addressConfig = {
-            Address = "172.20.170.235/32";
-            Peer = "172.20.159.228/32";
-            Scope = "link";
-            RouteMetric = 2048;
-          };
+          Address = "172.20.170.235/32";
+          Peer = "172.20.159.228/32";
+          Scope = "link";
+          RouteMetric = 2048;
         }
         {
-          addressConfig = {
-            Address = "fe80::3703:157/128";
-            Peer = "fe80::3703/64";
-            Scope = "link";
-            RouteMetric = 2048;
-          };
+          Address = "fe80::3703:157/128";
+          Peer = "fe80::3703/64";
+          Scope = "link";
+          RouteMetric = 2048;
         }
       ];
     };
@@ -222,34 +208,22 @@ in {
 
       addresses = [
         {
-          addressConfig = {
-            Address = "${dn42Ip}/128";
-          };
+          Address = "${dn42Ip}/128";
         }
         {
-          addressConfig = {
-            Address = "172.20.170.235/32";
-          };
+          Address = "172.20.170.235/32";
         }
         {
-          addressConfig = {
-            Address = "${dn42NodeIp}/128";
-          };
+          Address = "${dn42NodeIp}/128";
         }
         {
-          addressConfig = {
-            Address = "${dn42SyncthingGuiIp}/128";
-          };
+          Address = "${dn42SyncthingGuiIp}/128";
         }
         {
-          addressConfig = {
-            Address = "${dn42GrafanaIp}/128";
-          };
+          Address = "${dn42GrafanaIp}/128";
         }
         {
-          addressConfig = {
-            Address = "${dn42BirdLgProxy}/128";
-          };
+          Address = "${dn42BirdLgProxy}/128";
         }
       ];
     };
@@ -298,10 +272,8 @@ in {
 
       ipv6Prefixes = [
         {
-          ipv6PrefixConfig = {
-            Prefix = dn42LanNet;
-            Assign = "yes";
-          };
+          Prefix = dn42LanNet;
+          Assign = "yes";
         }
       ];
 
@@ -507,7 +479,7 @@ in {
   # basic ssh
   services.openssh.enable = true;
 
-  services.bird2 = let
+  services.bird = let
     ibgp = {
       name,
       peerId,
