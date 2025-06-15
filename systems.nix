@@ -63,22 +63,6 @@ in rec {
     private.nixosModules.joe
   ];
 
-  homeautomation-provision = assembleSystem "homeautomation-provision" [
-    ./hardware/x86_64-generic.nix
-    ./profiles/packaging/iso.nix
-    ./roles/provisioner.nix
-    ./profiles/joe-user.nix
-    private.nixosModules.joe
-    ({pkgs, ...}: {
-      environment.systemPackages = [
-        ((pkgs.callPackage
-          ./lib/provision.nix
-          {})
-        homeautomation.config)
-      ];
-    })
-  ];
-
   brewmonitor = assembleSystem "brewmonitor" [
     ./hardware/raspberry-pi-zero-2.nix
     ./profiles/packaging/sd-image-aarch64.nix
@@ -94,22 +78,6 @@ in rec {
     ./roles/jellyfin.nix
     ./profiles/joe-user.nix
     private.nixosModules.joe
-  ];
-
-  jellyfin-provision = assembleSystem "jellyfin-provision" [
-    ./hardware/x86_64-generic.nix
-    ./profiles/packaging/iso.nix
-    ./roles/provisioner.nix
-    ./profiles/joe-user.nix
-    private.nixosModules.joe
-    ({pkgs, ...}: {
-      environment.systemPackages = [
-        ((pkgs.callPackage
-          ./lib/provision.nix
-          {})
-        jellyfin.config)
-      ];
-    })
   ];
 
   livebox = assembleSystem "livebox" [
@@ -139,34 +107,10 @@ in rec {
   joebox = assembleSystem "joebox" [
     ./hardware/zimaboard.nix
     ./profiles/packaging/btrfs-root.nix
-    ./roles/joebox.nix
+    ./roles/joebox
     ./profiles/joe-user.nix
     private.nixosModules.joe
     private.nixosModules.nixos-remote-build
-  ];
-
-  lucasbox = assembleSystem "lucasbox" [
-    ./hardware/x86_64-generic.nix
-    ./profiles/packaging/btrfs-root.nix
-    ./roles/lucasbox.nix
-    ./profiles/joe-user.nix
-    private.nixosModules.joe
-  ];
-
-  lucasbox-provision = assembleSystem "lucasbox-provision" [
-    ./hardware/x86_64-generic.nix
-    ./profiles/packaging/iso.nix
-    ./roles/provisioner.nix
-    ./profiles/joe-user.nix
-    private.nixosModules.joe
-    ({pkgs, ...}: {
-      environment.systemPackages = [
-        ((pkgs.callPackage
-          ./lib/provision.nix
-          {})
-        lucasbox.config)
-      ];
-    })
   ];
 
   nasbox = assembleSystem "nasbox" [
@@ -175,21 +119,5 @@ in rec {
     ./roles/nasbox
     ./profiles/joe-user.nix
     private.nixosModules.joe
-  ];
-
-  nasbox-provision = assembleSystem "nasbox-provision" [
-    ./hardware/ugreen-nas.nix
-    ./profiles/packaging/iso.nix
-    ./roles/provisioner.nix
-    ./profiles/joe-user.nix
-    private.nixosModules.joe
-    ({pkgs, ...}: {
-      environment.systemPackages = [
-        ((pkgs.callPackage
-          ./lib/provision.nix
-          {})
-        nasbox.config)
-      ];
-    })
   ];
 }
