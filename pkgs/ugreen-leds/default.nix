@@ -1,5 +1,11 @@
-{ stdenv, lib, fetchFromGitHub, linuxPackages, kernel ? linuxPackages.kernel, kmod }:
-
+{
+  stdenv,
+  lib,
+  fetchFromGitHub,
+  linuxPackages,
+  kernel ? linuxPackages.kernel,
+  kmod,
+}:
 stdenv.mkDerivation rec {
   pname = "ugreen-leds";
   version = "0.3";
@@ -12,12 +18,12 @@ stdenv.mkDerivation rec {
   };
 
   sourceRoot = "source/kmod";
-  nativeBuildInputs = kernel.moduleBuildDependencies;                       # 2
+  nativeBuildInputs = kernel.moduleBuildDependencies;
 
   makeFlags = [
-    "KERNELRELEASE=${kernel.modDirVersion}"                                 # 3
-    "KDIR=${kernel.dev}/lib/modules/${kernel.modDirVersion}/build"    # 4
-    "INSTALL_MOD_PATH=$(out)"                                               # 5
+    "KERNELRELEASE=${kernel.modDirVersion}"
+    "KDIR=${kernel.dev}/lib/modules/${kernel.modDirVersion}/build"
+    "INSTALL_MOD_PATH=$(out)"
   ];
 
   meta = {

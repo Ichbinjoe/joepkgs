@@ -34,4 +34,27 @@
   };
 
   nix.settings.trusted-users = ["root" "@wheel" "@nix-remote-exec" "@nixbld"];
+
+  environment.systemPackages = with pkgs; [
+    zfs
+  ];
+
+  fileSystems = {
+    "/zpool" = {
+      device = "zpool";
+      fsType = "zfs";
+    };
+    "/zflash" = {
+      device = "zflash";
+      fsType = "zfs";
+    };
+    "/zpool/media" = {
+      device = "zpool/media";
+      fsType = "zfs";
+    };
+    "/zpool/monitoring" = {
+      device = "zpool/monitoring";
+      fsType = "zfs";
+    };
+  };
 }
