@@ -522,6 +522,7 @@ in {
     ldns.examples
     pdns
     whois
+    paperless-ngx
   ];
 
   services.bird-lg.frontend = {

@@ -16,6 +16,7 @@
     ./haproxy.nix
     ./jellyfin.nix
     ./netbox.nix
+    ./nsd.nix
     ./paperless.nix
     ./prometheus.nix
     ./postgres.nix
@@ -42,6 +43,7 @@
 
   environment.systemPackages = with pkgs; [
     zfs
+    ldns.examples
   ];
 
   dn42.addrs = [
