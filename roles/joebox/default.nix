@@ -132,6 +132,25 @@ in {
       ];
     };
 
+    "01-nasbox-wg" = {
+      netdevConfig = {
+        Name = "nasbox-wg";
+        Kind = "wireguard";
+      };
+
+      wireguardConfig = {
+        PrivateKeyFile = "/etc/wireguard/private.key";
+        ListenPort = 40243;
+      };
+
+      wireguardPeers = [
+        {
+          PublicKey = "12dT5iDJBDlnTDu7FY5nfOFZlLzFf5NlnxpKplfndyQ=";
+          AllowedIPs = ["0.0.0.0/0" "::/0"];
+        }
+      ];
+    };
+
     "01-iot" = {
       netdevConfig = {
         Kind = "vlan";
@@ -197,6 +216,23 @@ in {
         {
           Address = "fe80::3703:157/128";
           Peer = "fe80::3703/64";
+          Scope = "link";
+          RouteMetric = 2048;
+        }
+      ];
+    };
+    "01-nasbox" = {
+      matchConfig.Name = "nasbox-wg";
+
+      networkConfig = {
+        DHCP = "no";
+        IPv6AcceptRA = "no";
+      };
+
+      addresses = [
+        {
+          Address = "fe80::157:235/128";
+          Peer = "fe80::157:243/128";
           Scope = "link";
           RouteMetric = 2048;
         }
@@ -313,7 +349,7 @@ in {
           tcp dport ssh accept;
           iifname "wan" udp dport { 68, 33703 } accept;
           iifname { "lan", "iot" } udp dport 67 accept;
-          iifname "lan" udp dport 53 accept;
+          iifname "lan" udp dport { 53 40243 } accept;
           iifname "lan" tcp dport 53 accept;
           ip protocol icmp icmp type { echo-request, router-advertisement } accept;
         }
@@ -327,7 +363,7 @@ in {
         chain forward {
           type filter hook forward priority 1; policy accept;
 
-          iifname { "nyc-wg", "sea-wg", "fmepg-wg" } accept;
+          iifname { "nyc-wg", "sea-wg", "fmepg-wg", "nasbox-wg" } accept;
 
           ct state { established, related } accept;
           iifname { "lan", "wan" } ct state invalid drop;
@@ -340,7 +376,7 @@ in {
           iifname "iot" drop;
 
           oifname "wan" iifname "lan" masquerade;
-          oifname { "nyc-wg", "sea-wg", "fmepg-wg" } iifname { "lan", "lo" } snat to 172.20.170.235;
+          oifname { "nyc-wg", "sea-wg", "fmepg-wg", "nasbox-wg" } iifname { "lan", "lo" } snat to 172.20.170.235;
         }
       }
 
@@ -351,10 +387,10 @@ in {
              nd-router-advert,mld-listener-query} accept;
           iifname "lo" accept;
           tcp dport ssh accept;
-          iifname {"lan"} udp dport 53 accept;
+          iifname {"lan"} udp dport { 53 40243 } accept;
           iifname {"lan"} tcp dport 53 accept;
           iifname {"nyc-wg", "sea-wg"} udp dport 6696 accept;
-          iifname {"nyc-wg", "sea-wg", "fmepg-wg"} tcp dport 179 accept;
+          iifname {"nyc-wg", "sea-wg", "fmepg-wg", "nasbox-wg"} tcp dport 179 accept;
         }
 
         flowtable f6 {
@@ -366,9 +402,9 @@ in {
         chain forward {
           type filter hook forward priority 1; policy accept;
 
-          iifname { "nyc-wg", "sea-wg", "fmepg-wg" } oifname {"nyc-wg", "sea-wg", "fmepg-wg" } accept;
+          iifname { "nyc-wg", "sea-wg", "fmepg-wg", "nasbox-wg" } oifname {"nyc-wg", "sea-wg", "fmepg-wg", "nasbox-wg" } accept;
           oifname {"lan"} ip6 daddr fde7:76fd:7444:ffbb::/64 accept;
-          iifname {"lan"} ip6 saddr fde7:76fd:7444:ffbb::/64 oifname { "lan", "nyc-wg", "sea-wg", "fmepg-wg" } accept;
+          iifname {"lan"} ip6 saddr fde7:76fd:7444:ffbb::/64 oifname { "lan", "nyc-wg", "sea-wg", "fmepg-wg", "nasbox-wg" } accept;
 
           ct state { established, related } accept;
           flow offload @f6;
@@ -562,6 +598,11 @@ in {
       peerId = 242;
       mode = "multihop 4";
     };
+    ibgp_nasbox = ibgp {
+      name = "nasbox";
+      peerId = 243;
+      mode = "multihop 1";
+    };
   in {
     enable = true;
     config = ''
@@ -647,6 +688,10 @@ in {
           type tunnel;
         };
 
+        interface "nasbox-wg" {
+          type tunnel;
+        };
+
         ipv4 {
           import all;
           export where source != RTS_BGP;
@@ -665,6 +710,7 @@ in {
       ${ibgp_tyo}
       ${ibgp_ire}
       ${ibgp_mbi}
+      ${ibgp_nasbox}
 
       protocol bgp dn42_fmepg {
         local as 4242420157;

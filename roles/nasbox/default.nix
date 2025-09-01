@@ -7,6 +7,19 @@
   imports = [
     ../../profiles/base.nix
     ../../profiles/defaults.nix
+    ./bird-lg.nix
+    ./bird
+    ./buildbox.nix
+    ./dn42.nix
+    ./grafana.nix
+    ./netbox.nix
+    ./paperless.nix
+    ./prometheus.nix
+    ./postgres.nix
+    ./syncthing.nix
+    ./unbound.nix
+    ./wireguard.nix
+    ./znc.nix
   ];
 
   boot.kernel.sysctl = {
@@ -24,37 +37,15 @@
   # basic ssh
   services.openssh.enable = true;
 
-  # otherwise, set up a normal remote builder setup
-  users.groups.nix-remote-exec = {};
-  users.users.nixos-remote-build = {
-    description = "NixOS Remote Build";
-
-    isNormalUser = true;
-    extraGroups = ["nix-remote-exec"];
-  };
-
-  nix.settings.trusted-users = ["root" "@wheel" "@nix-remote-exec" "@nixbld"];
-
   environment.systemPackages = with pkgs; [
     zfs
   ];
 
-  fileSystems = {
-    "/zpool" = {
-      device = "zpool";
-      fsType = "zfs";
-    };
-    "/zflash" = {
-      device = "zflash";
-      fsType = "zfs";
-    };
-    "/zpool/media" = {
-      device = "zpool/media";
-      fsType = "zfs";
-    };
-    "/zpool/monitoring" = {
-      device = "zpool/monitoring";
-      fsType = "zfs";
-    };
-  };
+  dn42.addrs = [
+    "fde7:76fd:7444:eeee::1"
+  ];
+
+  dn42.advertisements6 = [
+    "fde7:76fd:7444:eeee::/64"
+  ];
 }

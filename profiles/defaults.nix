@@ -13,7 +13,7 @@ with lib; {
     # add another variable
     system.stateVersionOverride = mkOption {
       type = types.str;
-      default = "24.11";
+      default = "25.05";
       description = ''See system.stateVersion'';
     };
   };
