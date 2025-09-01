@@ -1,25 +1,28 @@
-{...}: {
-  # services.nginx = {
-  #   enable = true;
-  #   user = "netbox";
-  #   virtualHosts.netbox = {
-  #     listen = [
-  #       {
-  #         addr = "[${dn42Netbox}]";
-  #         port = 80;
-  #       }
-  #     ];
-  #     locations."/static/" = {
-  #       alias = "/var/lib/netbox/static/";
-  #     };
-  #     locations."/" = {
-  #       proxyPass = "http://${config.services.netbox.listenAddress}:${toString config.services.netbox.port}";
-  #       recommendedProxySettings = true;
-  #     };
-  #   };
-  # };
-  #
-  # systemd.services.nginx.serviceConfig.AmbientCapabilities = ["CAP_NET_BIND_SERVICE"];
+{config, ...}: let
+  dn42Netbox = "fde7:76fd:7444:eeee::102";
+in {
+  dn42.addrs = ["${dn42Netbox}/128"];
+  services.nginx = {
+    enable = true;
+    user = "netbox";
+    virtualHosts.netbox = {
+      listen = [
+        {
+          addr = "[${dn42Netbox}]";
+          port = 80;
+        }
+      ];
+      locations."/static/" = {
+        alias = "/var/lib/netbox/static/";
+      };
+      locations."/" = {
+        proxyPass = "http://${config.services.netbox.listenAddress}:${toString config.services.netbox.port}";
+        recommendedProxySettings = true;
+      };
+    };
+  };
+
+  systemd.services.nginx.serviceConfig.AmbientCapabilities = ["CAP_NET_BIND_SERVICE"];
 
   services.netbox = {
     enable = true;

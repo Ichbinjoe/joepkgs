@@ -13,6 +13,14 @@
           addrs = mkOption {
             type = types.listOf types.singleLineStr;
           };
+          addedReqHeaders = mkOption {
+            type = types.listOf types.singleLineStr;
+            default = [];
+          };
+          allowlistFrom = mkOption {
+            type = types.nullOr types.singleLineStr;
+            default = null;
+          };
         };
       };
     in
@@ -30,18 +38,30 @@
     mkHaproxyFrontend = {
       name,
       ip,
+      hdrs,
+      allowlist,
       backend,
-    }: ''
+    }: let
+      reqHdrs =
+        builtins.concatStringsSep "\n"
+        (map (h: " http-request set-header ${h}") hdrs);
+      allowlistStanza = lib.optionalString (allowlist != null)
+        "http-request deny if !{ src ${allowlist} }";
+    in ''
       frontend ${name}
         bind [${ip}]:80
         option forwardfor except 127.0.0.1
+        ${allowlistStanza}
         default_backend ${backend}
+      ${reqHdrs}
     '';
 
     mkHaproxySection = fwdName: fwd: let
       frontends = map mkHaproxyFrontend (lib.imap1 (i: v: {
           name = "${fwdName}${toString i}";
           ip = v;
+          allowlist = fwd.allowlistFrom;
+          hdrs = fwd.addedReqHeaders;
           backend = fwdName;
         })
         fwd.addrs);

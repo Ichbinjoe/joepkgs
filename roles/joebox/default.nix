@@ -804,6 +804,8 @@ in {
     listenAddress = "[${dn42BirdLgProxy}]:9999";
     allowedIPs = [
       "fde7:76fd:7444:ffbb::/64"
+      "fde7:76fd:7444:eeee::/64"
+      "fde7:76fd:7444:aaaa::243/128"
     ];
   };
 }

@@ -1,4 +1,14 @@
-{lib, ...}: {
+{
+  config,
+  lib,
+  ...
+}: {
+  dn42Expose.prometheus = {
+    port = config.services.prometheus.port;
+    addr = "fde7:76fd:7444:eeee::104";
+    allowlist = "fde7:76fd:7444::/48";
+  };
+
   services.prometheus = let
     monitoringAddrs = [
       "nyc01.joe.dn42"
@@ -26,10 +36,10 @@
     };
   in {
     enable = true;
-    listenAddress = "127.0.0.1";
+    listenAddress = "[::1]";
     stateDir = "../../zpool/monitoring/prometheus";
     retentionTime = "1y";
-    # webExternalUrl = "http://${dn42Ip}/";
+    webExternalUrl = "http://prometheus.joe.dn42/";
     scrapeConfigs = [
       {
         job_name = "dn42_vms";

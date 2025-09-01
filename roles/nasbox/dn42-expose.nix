@@ -14,6 +14,16 @@
           addr = mkOption {
             type = types.singleLineStr;
           };
+
+          reqHeaders = mkOption {
+            type = types.listOf types.singleLineStr;
+            default = [];
+          };
+
+          allowlist = mkOption {
+            type = types.nullOr types.singleLineStr;
+            default = null;
+          };
         };
       };
     in
@@ -30,6 +40,8 @@
     haproxy.localForwards =
       lib.mapAttrs (_: v: {
         localPort = v.port;
+        addedReqHeaders = v.reqHeaders;
+        allowlistFrom = v.allowlist;
         addrs = [v.addr];
       })
       config.dn42Expose;

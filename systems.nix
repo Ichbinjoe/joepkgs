@@ -119,5 +119,6 @@ in rec {
     ./roles/nasbox
     ./profiles/joe-user.nix
     private.nixosModules.joe
+    private.nixosModules.nixos-remote-build
   ];
 }

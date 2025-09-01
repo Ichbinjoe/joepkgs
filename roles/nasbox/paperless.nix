@@ -1,6 +1,12 @@
-{...}: {
+{config, ...}: {
+  dn42Expose.paperless = {
+    port = config.services.paperless.port;
+    addr = "fde7:76fd:7444:eeee::103";
+  };
+
   services.paperless = {
     enable = true;
+    address = "::1";
     dataDir = "/zpool/paperless";
     database.createLocally = true;
     settings = {
