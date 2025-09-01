@@ -14,6 +14,7 @@
     ./dn42-expose.nix
     ./grafana.nix
     ./haproxy.nix
+    ./jellyfin.nix
     ./netbox.nix
     ./paperless.nix
     ./prometheus.nix
