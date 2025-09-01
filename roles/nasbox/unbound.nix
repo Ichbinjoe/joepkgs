@@ -91,6 +91,14 @@
           control-interface = "/run/unbound/unbound.socket";
         };
 
+        stub-zone = let
+          stub = z: {
+            name = z.zone;
+            stub-host = map (d: d.name) dn42DelegationServers;
+          };
+        in
+          map stub dn42AuthoritativeZones;
+
         auth-zone = let
           nsEntry = ds: "delegation-servers.dn42. 900 IN  NS  ${ds.name}";
           aaaaEntry = ds: "${ds.name} 900 IN  AAAA  ${ds.ipv6}";

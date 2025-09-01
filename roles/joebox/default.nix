@@ -350,6 +350,7 @@ in {
           iifname "wan" udp dport { 68, 33703 } accept;
           iifname { "lan", "iot" } udp dport 67 accept;
           iifname "lan" udp dport { 53 40243 } accept;
+          iifname { "lan", nyc-wg", "sea-wg", "fmepg-wg", "nasbox-wg" } udp dport 123 accept;
           iifname "lan" tcp dport 53 accept;
           ip protocol icmp icmp type { echo-request, router-advertisement } accept;
         }
@@ -390,6 +391,7 @@ in {
           iifname {"lan"} udp dport { 53 40243 } accept;
           iifname {"lan"} tcp dport 53 accept;
           iifname {"nyc-wg", "sea-wg"} udp dport 6696 accept;
+          iifname { "lan", nyc-wg", "sea-wg", "fmepg-wg", "nasbox-wg" } udp dport 123 accept;
           iifname {"nyc-wg", "sea-wg", "fmepg-wg", "nasbox-wg"} tcp dport 179 accept;
         }
 
