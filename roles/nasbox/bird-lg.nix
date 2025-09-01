@@ -1,4 +1,9 @@
 {...}: {
+  dn42Expose.birdlg = {
+    port = 8080;
+    addr = "fde7:76fd:7444:eeee::100";
+  };
+
   services.bird-lg.frontend = {
     enable = true;
     listenAddress = "[::1]:8080";

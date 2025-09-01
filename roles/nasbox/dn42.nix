@@ -90,10 +90,11 @@
       "01-lo" = {
         matchConfig.Name = "lo";
 
-        addresses = map (a: {
-          Address = a;
-        })
-        config.dn42.addrs;
+        addresses =
+          map (a: {
+            Address = a;
+          })
+          config.dn42.addrs;
       };
     };
 
