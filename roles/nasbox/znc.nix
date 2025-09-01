@@ -1,4 +1,11 @@
 {...}: {
+  dn42Expose.znc = {
+    # this is magic znc stateful config :(
+    port = 5001;
+    addr = "fde7:76fd:7444:eeee::107";
+    allowlist = "fde7:76fd:7444::/48";
+  };
+
   services.znc = {
     enable = true;
     mutable = false; # Overwrite configuration set by ZNC from the web and chat interfaces.
