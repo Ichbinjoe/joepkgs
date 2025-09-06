@@ -11,6 +11,7 @@
     ./bird
     ./buildbox.nix
     ./dn42.nix
+    ./dn42-ca.nix
     ./dn42-expose.nix
     ./grafana.nix
     ./haproxy.nix

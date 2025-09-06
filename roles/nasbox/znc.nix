@@ -52,7 +52,6 @@
             "sasl"
             "simple_away"
           ];
-          TrustAllCerts = true;
           TrustPKI = false;
           TrustedServerFingerprint = "db:49:3a:31:93:9f:36:e3:90:f3:fc:f4:95:77:fb:78:ce:9e:34:ab:e7:ce:49:52:77:e2:0e:05:35:47:2e:51";
 
