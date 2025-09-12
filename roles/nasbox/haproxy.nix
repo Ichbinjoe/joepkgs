@@ -45,7 +45,8 @@
       reqHdrs =
         builtins.concatStringsSep "\n"
         (map (h: " http-request set-header ${h}") hdrs);
-      allowlistStanza = lib.optionalString (allowlist != null)
+      allowlistStanza =
+        lib.optionalString (allowlist != null)
         "http-request deny if !{ src ${allowlist} }";
     in ''
       frontend ${name}

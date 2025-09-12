@@ -24,6 +24,7 @@
     ./syncthing.nix
     ./unbound.nix
     ./wireguard.nix
+    ./zfs.nix
     ./znc.nix
   ];
 

@@ -55,7 +55,10 @@
           TrustPKI = true;
 
           Chan = let
-            acBuf = n: {AutoClearChanBuffer = true; Buffer = n; };
+            acBuf = n: {
+              AutoClearChanBuffer = true;
+              Buffer = n;
+            };
           in {
             "#dn42" = acBuf 1000;
             "#dn42-peering" = acBuf 100;
