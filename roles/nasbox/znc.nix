@@ -52,8 +52,7 @@
             "sasl"
             "simple_away"
           ];
-          TrustPKI = false;
-          TrustedServerFingerprint = "db:49:3a:31:93:9f:36:e3:90:f3:fc:f4:95:77:fb:78:ce:9e:34:ab:e7:ce:49:52:77:e2:0e:05:35:47:2e:51";
+          TrustPKI = true;
 
           Chan = let
             acBuf = n: {AutoClearChanBuffer = true; Buffer = n; };
@@ -63,18 +62,6 @@
             "##dn42" = acBuf 100;
             "#dn42-social" = acBuf 1000;
           };
-        };
-
-        Network.dn42 = {
-          Server = "irc.dn42 +6697";
-          Nick = "ichbinjoe";
-          AltNick = "ichbinjoe_";
-          QuitMsg = "Bye - irc@ibj.io";
-          LoadModule = [
-            "keepnick"
-            "sasl"
-            "simple_away"
-          ];
         };
       };
     };
