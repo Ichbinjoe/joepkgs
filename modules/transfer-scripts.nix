@@ -28,6 +28,7 @@ in {
   config.system.build.transferScripts = localPkgs: rec {
     toplevel = config.system.build.toplevel;
     uploadViaSsh = localPkgs.writeShellScriptBin "upload-via-ssh" ''
+      echo "uploading '${switchAndCreateGeneration}' to $1"
       ${localPkgs.nix}/bin/nix-copy-closure --to "$1" "${switchAndCreateGeneration}"
       ssh -t "$1" -- "bash -c \"sudo -- ${switchAndCreateGeneration}/bin/switch-and-create-gen $2\""
     '';

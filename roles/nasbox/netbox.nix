@@ -78,4 +78,6 @@ in {
         netbox-inventory
       ];
   };
+
+  users.users.netbox.extraGroups = ["nsd"];
 }

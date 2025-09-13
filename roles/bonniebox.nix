@@ -11,6 +11,11 @@ in {
     ../profiles/defaults.nix
   ];
 
+  nix.settings = {
+    trusted-users = ["root" "joe"];
+    require-sigs = false;
+  };
+
   boot.initrd.kernelModules = [
     "ahci"
     "ata_piix"
@@ -59,11 +64,6 @@ in {
       ];
     };
   in {
-    "01-nyc-wg" = wg {
-      name = "nyc-wg";
-      pubkey = "BmbqgpKUEYp+FKIFKKDi0Sh+l7OBLzB+AJdTogk7uRU=";
-      endpoint = "107.175.132.113:49990";
-    };
     "01-sea-wg" = wg {
       name = "sea-wg";
       pubkey = "9vBrb8Jq3WmifgCjncMzLZvdkoDi3FoSvHjJGsUMwGg=";
@@ -95,7 +95,6 @@ in {
       ];
     };
   in {
-    "01-nyc-wg" = wgNet "nyc-wg";
     "01-sea-wg" = wgNet "sea-wg";
     "01-sjc-wg" = wgNet "sjc-wg";
 
@@ -141,24 +140,6 @@ in {
             if source = RTS_STATIC then reject;
             krt_prefsrc = ${dn42Ip};
             accept;
-          };
-        };
-      };
-
-      protocol ospf v3 nyc_v6 {
-        area 0.0.0.0 {
-          interface "nyc-wg" {
-            type ptmp;
-            neighbors {
-              fe80::101;
-            };
-          };
-        };
-
-        ipv6 {
-          import all;
-          export filter {
-            if source = RTS_STATIC then accept; else reject;
           };
         };
       };
