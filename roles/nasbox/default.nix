@@ -11,7 +11,6 @@
     ./bird
     ./buildbox.nix
     ./dn42.nix
-    ./dn42-ca.nix
     ./dn42-expose.nix
     ./grafana.nix
     ./haproxy.nix
@@ -55,4 +54,6 @@
   dn42.advertisements6 = [
     "fde7:76fd:7444:eeee::/64"
   ];
+
+  dn42Ca = true;
 }
