@@ -1,4 +1,4 @@
-{...}: {
+{lib, ...}: {
   dn42Expose.znc = {
     port = 5001;
     addr = "fde7:76fd:7444:eeee::107";
@@ -12,7 +12,7 @@
     config = {
       LoadModule = ["adminlog" "webadmin"];
       Listener = {
-        httplistener = {
+        l = lib.mkForce {
           AllowIRC = false;
           AllowWeb = true;
           Host = "::1";
