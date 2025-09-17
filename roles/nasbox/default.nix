@@ -12,6 +12,7 @@
     ./buildbox.nix
     ./dn42.nix
     ./dn42-expose.nix
+    ./gitea.nix
     ./grafana.nix
     ./haproxy.nix
     ./jellyfin.nix
@@ -20,6 +21,7 @@
     ./paperless.nix
     ./prometheus.nix
     ./postgres.nix
+    ./quickwit.nix
     ./syncthing.nix
     ./unbound.nix
     ./wireguard.nix
