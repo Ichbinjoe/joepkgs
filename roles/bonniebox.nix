@@ -167,4 +167,38 @@ in {
       };
     '';
   };
+
+  services.gitea-actions-runner.instances = let
+    mkRunner = {
+      name,
+      tokenFile,
+      labels,
+      hostPackages,
+    }: {
+      inherit name labels hostPackages;
+      enable = true;
+      url = "http://[fde7:76fd:7444:eeee::108]";
+      tokenFile = "/var/lib/gitea-runner/${tokenFile}";
+    };
+
+    stdPkgs = with pkgs; [
+      bash
+      coreutils
+      curl
+      gawk
+      gitMinimal
+      gnused
+      wget
+    ];
+  in {
+    bonnie-ansible-runner = mkRunner {
+      name = "bonnie_ansible_runner";
+      tokenFile = "ansible-runner";
+      labels = ["x86-64" "ansible"];
+      hostPackages = stdPkgs ++ [
+        pkgs.ansible
+        pkgs.ansible-lint
+      ];
+    };
+  };
 }
