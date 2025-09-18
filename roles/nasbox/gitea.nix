@@ -1,7 +1,6 @@
-{ config, ... }:
-{
+{config, ...}: {
   userDBs = ["gitea"];
-  
+
   dn42Expose.gitea = {
     port = config.services.gitea.settings.server.HTTP_PORT;
     addr = "fde7:76fd:7444:eeee::108";

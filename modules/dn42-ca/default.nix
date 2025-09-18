@@ -1,5 +1,8 @@
-{config, lib, ...}:
 {
+  config,
+  lib,
+  ...
+}: {
   options = {
     dn42Ca = lib.mkEnableOption "dn42Ca";
   };

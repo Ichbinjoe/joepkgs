@@ -195,10 +195,12 @@ in {
       name = "bonnie_ansible_runner";
       tokenFile = "ansible-runner";
       labels = ["x86-64" "ansible"];
-      hostPackages = stdPkgs ++ [
-        pkgs.ansible
-        pkgs.ansible-lint
-      ];
+      hostPackages =
+        stdPkgs
+        ++ [
+          pkgs.ansible
+          pkgs.ansible-lint
+        ];
     };
   };
 }
